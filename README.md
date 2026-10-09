@@ -8,13 +8,17 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 ## Preview
 
-This GIF is recorded from the real Obsidian app, version 1.14.2, with the plugin enabled. It uses a synthetic fixture note.
+The screenshots show plugin 0.1.2 in the real Obsidian app, version 1.14.2, using a synthetic fixture note.
+
+![Refined dark theme and centered connector attachments](docs/assets/obsidian-preview-dark.png)
+
+The GIF and MP4 below were recorded with plugin 0.1.0. They demonstrate path highlighting; the screenshots show the current appearance and connector attachments.
 
 ![Ancestor path highlighting in a real Obsidian window](docs/assets/obsidian-path-highlight.gif)
 
 [Light screenshot](docs/assets/obsidian-preview-light.png) · [Dark screenshot](docs/assets/obsidian-preview-dark.png) · [Short app video](docs/assets/obsidian-preview.mp4) · [Capture report](docs/assets/obsidian-capture-report.md)
 
-Supplemental [browser previews](docs/assets/path-highlight.gif) show the same plugin layout and interaction using a browser test stand. [Theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Browser video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf). They are test-stand captures, not Obsidian recordings.
+Supplemental 0.1.0 [browser previews](docs/assets/path-highlight.gif) show the same plugin layout and interaction using a browser test stand. [Theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Browser video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf). They are test-stand captures, not Obsidian recordings.
 
 ## Features
 

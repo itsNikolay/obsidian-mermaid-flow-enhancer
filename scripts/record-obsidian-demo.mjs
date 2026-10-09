@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,11 +11,13 @@ const notePath = "Examples/Release flow.md";
 const output = join(here, "docs/assets");
 const cli = process.env.OBSIDIAN_CLI || "/opt/homebrew/bin/obsidian";
 const ffmpeg = process.env.FFMPEG || "ffmpeg";
+const version = JSON.parse(await readFile(join(here, "manifest.json"), "utf8")).version;
 const fixture = [
   "A synthetic flowchart for the Mermaid Flow Enhancer preview.",
   "",
   "```mermaid",
   "flowchart LR",
+  `%% Preview build ${version}`,
   '  request["Request"] --> triage["Triage"]',
   '  triage --> ready{"Ready to build?"}',
   '  ready -->|No| clarify["Clarify details"]',
@@ -48,8 +50,10 @@ const pause = ms => new Promise(resolvePause => setTimeout(resolvePause, ms));
 const temp = await mkdtemp(join(tmpdir(), "mfe-obsidian-record-"));
 await mkdir(output, { recursive: true });
 let screenshotIndex = 0;
+let initialState;
 
 async function screenshot(targetPath, sequence) {
+  await rm(targetPath, { force: true });
   run(cli, [`vault=${vault}`, "dev:screenshot", `path=${targetPath}`]);
   let info;
   for (let attempt = 0; attempt < 20; attempt++) {
@@ -68,9 +72,12 @@ async function frame(sequence = generatedFrames) {
   return path;
 }
 
-function pointer(x, y) {
+async function pointer(x, y) {
+  obs("dev:cdp", "method=Page.bringToFront", "params={}");
+  await pause(1000);
   const params = JSON.stringify({ type: "mouseMoved", x, y, button: "none", buttons: 0 });
   obs("dev:cdp", "method=Input.dispatchMouseEvent", `params=${params}`);
+  await pause(1000);
 }
 
 async function setDark(dark) {
@@ -89,24 +96,60 @@ async function setDark(dark) {
 }
 
 async function nodePositions() {
-  return guardedEval(`JSON.stringify([...document.querySelectorAll("svg.mfe-enhanced .node[data-mpe-key]")].map(n => { const r = n.getBoundingClientRect(); return [n.getAttribute("data-mpe-key"), r.x + r.width / 2, r.y + r.height / 2] }))`);
+  return guardedEval(`JSON.stringify([...document.querySelectorAll("svg.mfe-enhanced .node[data-mpe-key]")].map(n => { const r = n.querySelector("polygon,rect,circle,ellipse").getBoundingClientRect(); return [n.getAttribute("data-mpe-key"), r.x + r.width / 2, r.y + r.height / 2] }))`);
+}
+
+function verifyGeometry() {
+  const proof = guardedEval(`JSON.stringify((()=>{
+    const svg=document.querySelector("svg.mfe-enhanced");
+    const nodes=new Map([...svg.querySelectorAll(".node[data-mpe-key]")].map(n=>[n.getAttribute("data-mpe-key"),n.querySelector("polygon,rect,circle,ellipse")?.getBoundingClientRect()]));
+    const markerById=new Map([...svg.querySelectorAll("marker")].map(m=>[m.id,{width:Number(m.getAttribute("markerWidth")),height:Number(m.getAttribute("markerHeight"))}]));
+    const edges=[...svg.querySelectorAll("path.flowchart-link[data-mpe-from][data-mpe-to]")].map(path=>{
+      const from=nodes.get(path.getAttribute("data-mpe-from")),to=nodes.get(path.getAttribute("data-mpe-to"));
+      const ctm=path.getScreenCTM(), transform=p=>new DOMPoint(p.x,p.y).matrixTransform(ctm);
+      const a=transform(path.getPointAtLength(0)), b=transform(path.getPointAtLength(path.getTotalLength()));
+      const sideError=(point,rect)=>Math.min(
+        Math.hypot(point.x-rect.left,point.y-(rect.top+rect.height/2)),
+        Math.hypot(point.x-rect.right,point.y-(rect.top+rect.height/2)),
+        Math.hypot(point.x-(rect.left+rect.width/2),point.y-rect.top),
+        Math.hypot(point.x-(rect.left+rect.width/2),point.y-rect.bottom));
+      const endpoint=(point,rect)=>({mode:"side",error:sideError(point,rect)});
+      const markerId=path.getAttribute("marker-end")?.match(/#([^)]*)/)?.[1];
+      return {from:path.getAttribute("data-mpe-from"),to:path.getAttribute("data-mpe-to"),start:endpoint(a,from),end:endpoint(b,to),endMarker:markerById.get(markerId)};
+    });
+    return {edges};
+  })())`);
+  const badMarkers = proof.edges.filter(edge => edge.endMarker?.width !== 8 || edge.endMarker?.height !== 8);
+  const endpoints = proof.edges.flatMap(edge => [edge.start, edge.end]);
+  const maxEndpointError = Math.max(0, ...endpoints.map(endpoint => endpoint.error));
+  if (badMarkers.length || proof.edges.length === 0 || !Number.isFinite(maxEndpointError) || maxEndpointError > 2) {
+    throw new Error(`Enhanced SVG geometry verification failed: ${JSON.stringify({badMarkers, edgeCount: proof.edges.length, maxEndpointError, edges: proof.edges})}`);
+  }
+  return {arrowMarkerCount: proof.edges.length, edgeCount: proof.edges.length,
+    sideDockedEndpoints: endpoints.length,
+    maxEndpointError: Number(maxEndpointError.toFixed(3))};
 }
 
 async function recordPath(sequence, keys, holdMs, sampleMs, samplesPerNode = 2) {
-  const nodes = new Map((await nodePositions()).map(([key, x, y]) => [key, [x, y]]));
   const outside = guardedEval("JSON.stringify([Math.round(innerWidth / 2), Math.round(innerHeight * 0.82)])");
-  pointer(outside[0], outside[1]);
+  await pointer(outside[0], outside[1]);
   await pause(350);
   if (guardedEval("document.querySelector('svg.mfe-enhanced')?.classList.contains('mpe-tracing')")) {
     throw new Error("Path highlight failed to reset before recording");
   }
   await frame(sequence);
   for (const key of keys) {
+    const nodes = new Map((await nodePositions()).map(([nodeKey, x, y]) => [nodeKey, [x, y]]));
     const point = nodes.get(key);
     if (!point || !point.every(Number.isFinite)) throw new Error(`Could not locate node ${key} in the enhanced Obsidian preview`);
-    pointer(point[0], point[1]);
+    await pointer(point[0], point[1]);
     await pause(sampleMs);
-    const pathState = guardedEval(`JSON.stringify({tracing: document.querySelector("svg.mfe-enhanced")?.classList.contains("mpe-tracing"), target: document.querySelector('svg.mfe-enhanced .node[data-mpe-key="${key}"]')?.classList.contains("mpe-on-path"), selected: document.querySelectorAll("svg.mfe-enhanced .mpe-on-path").length})`);
+    let pathState;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) await pause(350);
+      pathState = guardedEval(`JSON.stringify({tracing: document.querySelector("svg.mfe-enhanced")?.classList.contains("mpe-tracing"), target: document.querySelector('svg.mfe-enhanced .node[data-mpe-key="${key}"]')?.classList.contains("mpe-on-path"), selected: document.querySelectorAll("svg.mfe-enhanced .mpe-on-path").length})`);
+      if (pathState.tracing && pathState.target && pathState.selected >= (key === "request" ? 1 : 2)) break;
+    }
     if (!pathState.tracing || !pathState.target || pathState.selected < (key === "request" ? 1 : 2)) {
       throw new Error(`Path highlight did not activate over ${key}: ${JSON.stringify(pathState)}`);
     }
@@ -118,7 +161,7 @@ async function recordPath(sequence, keys, holdMs, sampleMs, samplesPerNode = 2) 
       await pause(holdMs - sampleMs);
     }
   }
-  pointer(outside[0], outside[1]);
+  await pointer(outside[0], outside[1]);
   await pause(100);
   await frame(sequence);
   await pause(200);
@@ -153,7 +196,8 @@ function encode(args) {
 }
 
 try {
-  const initial = guardedEval("JSON.stringify({dark: document.body.classList.contains('theme-dark'), sidebarCollapsed: document.querySelector('.workspace-split.mod-left-split')?.classList.contains('is-sidedock-collapsed') ?? true})");
+  const initial = guardedEval(`JSON.stringify({dark: document.body.classList.contains('theme-dark'), sidebarCollapsed: document.querySelector('.workspace-split.mod-left-split')?.classList.contains('is-sidedock-collapsed') ?? true, pluginEnabled: app.plugins.enabledPlugins.has(${JSON.stringify(plugin)})})`);
+  initialState = initial;
   let pluginInfo = obs("plugin", `id=${plugin}`);
   if (!/enabled\s+true/.test(pluginInfo)) {
     obs("plugin:enable", `id=${plugin}`);
@@ -175,13 +219,14 @@ try {
   if (ready.vault !== vault || ready.activePath !== notePath || !ready.pluginEnabled || ready.svgCount !== 1) {
     throw new Error(`Demo setup check failed: ${JSON.stringify(ready)}`);
   }
+  const geometryProof = verifyGeometry();
 
   const pathKeys = ["request", "triage", "ready", "clarify", "triage", "ready"];
   const lightFrames = [];
   await setDark(false);
-  pointer(1010, 785); await pause(300);
+  await pointer(1010, 785); await pause(300);
   await screenshot(join(output, "obsidian-preview-light.png"));
-  await recordPath(lightFrames, pathKeys, 420, 160, 1);
+  await recordPath(lightFrames, pathKeys, 600, 300, 1);
   const lightConcat = join(temp, "light.ffconcat");
   await writeConcat(lightConcat, lightFrames);
   const gifPath = join(output, "obsidian-path-highlight.gif");
@@ -191,9 +236,9 @@ try {
 
   const videoFrames = [];
   await screenshot(join(output, "obsidian-preview-light.png"), videoFrames);
-  await recordPath(videoFrames, pathKeys, 420, 160);
+  await recordPath(videoFrames, pathKeys, 600, 300);
   await setDark(true);
-  pointer(1010, 785); await pause(300);
+  await pointer(1010, 785); await pause(300);
   const darkPalette = guardedEval(`JSON.stringify({dark:document.body.classList.contains("theme-dark"), fill:getComputedStyle(document.querySelector("svg.mfe-enhanced .node rect")).fill, text:getComputedStyle(document.querySelector("svg.mfe-enhanced .nodeLabel")).color, line:getComputedStyle(document.querySelector("svg.mfe-enhanced .flowchart-link")).stroke, svgFilter:getComputedStyle(document.querySelector("svg.mfe-enhanced")).filter})`);
   if (!darkPalette.dark || darkPalette.svgFilter !== "none") throw new Error(`Dark Mermaid filter is still active: ${JSON.stringify(darkPalette)}`);
   await screenshot(join(output, "obsidian-preview-dark.png"), videoFrames);
@@ -219,6 +264,7 @@ try {
     `Captured from the real Obsidian app, vault \`${vault}\`, with the community plugin enabled. The note at \`${notePath}\` is a synthetic fixture created by the recorder.`,
     "Frames came from the official `obsidian dev:screenshot` command. Pointer movement used `Input.dispatchMouseEvent` through `obsidian dev:cdp`.",
     `The first dark-theme capture exposed Obsidian's native Mermaid inversion filter on the enhanced SVG. The plugin CSS fix now disables that filter only for the enhanced SVG; the verified dark values are ${JSON.stringify(darkPalette)}.`,
+    `The rendered SVG also passed the geometry check: all ${geometryProof.arrowMarkerCount} referenced arrow markers are 8 × 8, and all ${geometryProof.sideDockedEndpoints} edge endpoints land at shape-side midpoints (maximum measured deviation ${geometryProof.maxEndpointError} CSS px).`,
     "",
     `The path GIF uses ${lightFrames.length} real screenshots over about ${gifElapsed} s. The MP4 uses ${videoFrames.length} screenshots over about ${elapsed} s (average ${averageSamples} screenshots/s; observed capture intervals ${shortestSample}-${longestSample} ms). The MP4 preserves those recorded intervals. Screenshot sampling is not a high-frame-rate screen recording, so the clip shows genuine app states but does not reproduce each 450 ms transition at full display refresh.`,
     "",
@@ -236,5 +282,17 @@ try {
   console.log(`Obsidian MP4: ${(videoInfo.size / 1024 / 1024).toFixed(2)} MiB, ${elapsed} s (${videoFrames.length} actual screenshots)`);
   console.log(`Captured ${lightFrames.length + videoFrames.length} real app frames in ${vault}.`);
 } finally {
+  if (initialState) {
+    try {
+      const current = guardedEval(`JSON.stringify({dark:document.body.classList.contains('theme-dark'), sidebarCollapsed:document.querySelector('.workspace-split.mod-left-split')?.classList.contains('is-sidedock-collapsed') ?? true, pluginEnabled:app.plugins.enabledPlugins.has(${JSON.stringify(plugin)})})`);
+      if (current.dark !== initialState.dark) obs("command", "id=theme:toggle-light-dark");
+      if (current.sidebarCollapsed !== initialState.sidebarCollapsed) obs("command", "id=app:toggle-left-sidebar");
+      if (current.pluginEnabled !== initialState.pluginEnabled) {
+        obs(current.pluginEnabled ? "plugin:disable" : "plugin:enable", `id=${plugin}`);
+      }
+    } catch (error) {
+      console.error(`Could not fully restore demo vault UI state: ${error.message}`);
+    }
+  }
   await rm(temp, { recursive: true, force: true });
 }

@@ -36,3 +36,11 @@ Directory releases use normal GitHub releases with numeric `x.y.z` tags. Keep be
 The downloaded release is installed and enabled in the disposable Downloads demo vault on Obsidian 1.14.2/macOS. Reload succeeds, enhanced SVG is present with `filter:none`, and the developer error log is empty. Demo preferences were preserved after the install test. The public listing now exposes an active Add to Obsidian link. The CLI catalogue install test reported “Plugin not found in community plugins”; direct catalogue installation remains unverified, so the release files were installed manually. No original user-vault plugin files were replaced.
 
 The official 0.1.1 directory scan completed on 2026-10-09 and made 0.1.1 the current version. Build verification reproduced the release JavaScript byte-for-byte. The remaining finding is a CSS warning about scoped `!important`, whose necessity and isolation are documented and browser-tested.
+
+## 0.1.2 release verification
+
+[Release 0.1.2](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/releases/tag/0.1.2) refines the dark palette and centers connector attachments, including return paths, with 8px arrowheads. The [release workflow](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37959501468) passed all 34 tests (20 unit, 14 Chromium), built the plugin, and attested release assets. The lead also ran the full local check successfully. The three downloaded files match the local build byte-for-byte.
+
+New browser checks measure actual side-center positions and terminal tangents in TD/TB/BT/LR/RL, circles, and nested subgraphs, including Mermaid's native rounded quadratic paths. Actual Obsidian 1.14.2/macOS rendering in the disposable demo vault was refreshed with a versioned synthetic fixture: all 18 endpoints match shape side centers, the referenced pointEnd marker is 8×8, and the developer error log is empty. Cached diagrams may need a note refresh after a plugin update.
+
+The official 0.1.2 directory review completed and made 0.1.2 the current release. The directory verified both artifact attestations and reproduced the release JavaScript byte-for-byte; the remaining finding is the previously documented scoped CSS `!important` warning.
