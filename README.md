@@ -2,6 +2,8 @@
 
 Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, aligned decision branches, rounded orthogonal connectors, and an ancestor-path highlight when you hover or focus a node or edge.
 
+**Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
+
 > **Beta:** This plugin is under active development. External user testing and submission to the Obsidian Community plugins directory are still pending. Please report issues with a small Mermaid example and your Obsidian version.
 
 ## Features
@@ -42,7 +44,7 @@ npm run test:integration
 npm run build
 ```
 
-Copy `main.js`, `manifest.json`, and `styles.css` to the plugin directory shown above, then reload Obsidian.
+Copy `main.js`, `manifest.json`, and `styles.css` to the plugin directory shown above, then reload Obsidian. For update and rollback steps, see the [release checklist](docs/release-checklist.md).
 
 ## Use
 
@@ -90,6 +92,10 @@ The plugin uses Obsidian's Mermaid loader and Mermaid's generated SVG structure.
 ## Development
 
 See [testing and development](docs/testing.md) and the [demo script](docs/demo-script.md).
+
+## Upgrade and rollback
+
+Plugin releases do not migrate or rewrite note contents. Plugin preferences are stored separately by Obsidian and use the `compactLayout`, `pathHighlight`, `animationDuration`, and `hoverDelay` settings. New or missing values use defaults; numeric values are normalized to the supported range when loaded. Before replacing release files, disable the plugin and keep a copy of its existing plugin folder. To roll back, disable the plugin, restore the previous `main.js`, `manifest.json`, and `styles.css` together, and re-enable it. If you remove the plugin, Mermaid code blocks remain in notes and Obsidian renders them without this plugin.
 
 ## License
 
