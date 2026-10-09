@@ -1,6 +1,10 @@
 # Obsidian Mermaid Flow Enhancer
 
-Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, aligned decision branches, rounded orthogonal connectors, and an ancestor-path highlight when you hover or focus a node or edge.
+An **Obsidian Mermaid plugin** for readable Markdown flowcharts: compact diagram layouts, aligned decision branches, rounded orthogonal connectors, light and dark theme styling, and ancestor-path highlighting when you hover or focus any node or edge.
+
+[![Добавить в Obsidian — install Mermaid Flow Enhancer](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
+
+The button opens the official plugin installation page. Choose **Add to Obsidian**, then **Install** and **Enable** in the app.
 
 **Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
 
@@ -19,6 +23,12 @@ The GIF and MP4 demonstrate ancestor-path highlighting in both themes. The MP4 r
 [Light screenshot](docs/assets/obsidian-preview-light.png) · [Dark screenshot](docs/assets/obsidian-preview-dark.png) · [Short app video](docs/assets/obsidian-preview.mp4) · [Capture report](docs/assets/obsidian-capture-report.md)
 
 Supplemental 0.1.0 [browser previews](docs/assets/path-highlight.gif) show the same plugin layout and interaction using a browser test stand. [Theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Browser video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf). They are test-stand captures, not Obsidian recordings.
+
+## Mermaid flowcharts in Obsidian
+
+Use Mermaid Flow Enhancer for **Obsidian flowchart styling**, **compact Mermaid diagrams**, **aligned decision branches**, **rounded orthogonal arrows**, and **interactive path highlighting** in Markdown notes. It helps you follow process diagrams and retry flows while keeping Mermaid source editable.
+
+**По-русски:** плагин Mermaid для Obsidian — компактные блок-схемы, выравнивание веток «да/нет», аккуратные стрелки, подсветка пути при наведении, оформление диаграмм для светлой и тёмной темы.
 
 ## Features
 
@@ -45,6 +55,8 @@ The plugin runs locally without telemetry or network requests. No additional ser
 ## Install
 
 ### From the community directory
+
+[![Добавить в Obsidian — open the plugin installation page](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
 
 Open the [Mermaid Flow Enhancer listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) and choose **Add to Obsidian**, then install and enable the plugin. If your app does not find the newly published listing yet, use the release installation below.
 
