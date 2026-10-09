@@ -50,3 +50,5 @@ Verified on 2026-10-09 with Linux ARM64 Obsidian 1.14.4 and plugin 0.1.2 inside 
 The legacy `npx tsx scripts/record-obsidian-demo.mts` entry point also routes to Docker and never starts the host Obsidian app.
 
 The grocery recording has 17 nodes and 22 flowchart connections. The endpoint-center metric is diagnostic for this mixed-shape diagram; it is not a strict centered-docking guarantee for every Mermaid shape. The smaller `docker:check` fixture retains its strict centered-endpoint assertions.
+
+Recorder callbacks execute inside the browser. The Docker entrypoint runs `test-obsidian-docker.mts` through Node’s native `--experimental-strip-types`, preserving callbacks without transpiler helper functions. Use the same flag for `scripts/record-demo.mts`; other developer tools and unit tests run through `tsx`.

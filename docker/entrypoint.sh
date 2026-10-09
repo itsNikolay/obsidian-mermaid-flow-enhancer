@@ -5,4 +5,4 @@ display_pid=$!
 trap 'kill "$display_pid" 2>/dev/null || true' EXIT
 for _attempt in {1..30}; do [ -S /tmp/.X11-unix/X99 ] && break; sleep 0.1; done
 npm run check
-npx tsx scripts/test-obsidian-docker.mts "${1:-check}"
+node --experimental-strip-types scripts/test-obsidian-docker.mts "${1:-check}"

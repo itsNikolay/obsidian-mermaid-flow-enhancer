@@ -5,7 +5,7 @@ This is a reproducible browser preview of Mermaid Flow Enhancer behavior. It is 
 Regenerate the browser-preview GIFs, MP4, theme screenshots, print PDF, and node-count timing sample with:
 
 ```sh
-npx tsx scripts/record-demo.mts
+node --experimental-strip-types scripts/record-demo.mts
 ```
 
 The script expects the project dependencies installed with `npm ci` in the repository, Playwright Chromium, and `ffmpeg`. It uses the Playwright browser when installed; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can point to another Chromium binary. It creates the browser bundle at `docs/demo/demo.js` and media under `docs/assets/`; the generated bundle and temporary recordings are ignored by Git.
