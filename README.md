@@ -4,7 +4,7 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 **Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
 
-> **Beta:** This plugin is under active development. External user testing and submission to the Obsidian Community plugins directory are still pending. Please report issues with a small Mermaid example and your Obsidian version.
+> **Beta:** This plugin is under active development. External user testing is pending. The [Community directory listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) is published; installation awaits automated review. Please report issues with a small Mermaid example and your Obsidian version.
 
 ## Preview
 

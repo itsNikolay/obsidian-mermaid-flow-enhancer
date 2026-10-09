@@ -32,7 +32,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if [[ "$RELEASE_TAG" == 0.* ]]; then
-            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes --prerelease
+            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes --title "Mermaid Flow Enhancer $RELEASE_TAG — desktop beta"
           else
             gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes
           fi
