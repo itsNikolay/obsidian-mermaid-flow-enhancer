@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 interface DemoApp extends App {
   plugins: { enablePluginAndSave(id: string): Promise<void> };
-  commands: { executeCommandById(id: string): void };
+  commands: { executeCommandById(id: string): boolean; };
 }
 declare global {
   var app: DemoApp;
