@@ -8,17 +8,19 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 ## Preview
 
-These GIFs use the plugin's actual layout and hover modules in a browser test stand. They are **browser previews**, not recordings of Obsidian.
+This GIF is recorded from the real Obsidian app, version 1.14.2, with the plugin enabled. It uses a synthetic fixture note.
 
-![Smooth ancestor path highlighting in a Mermaid flowchart](docs/assets/path-highlight.gif)
+![Ancestor path highlighting in a real Obsidian window](docs/assets/obsidian-path-highlight.gif)
 
-[Light and dark theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Short video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf)
+[Light screenshot](docs/assets/obsidian-preview-light.png) · [Dark screenshot](docs/assets/obsidian-preview-dark.png) · [Short app video](docs/assets/obsidian-preview.mp4) · [Capture report](docs/assets/obsidian-capture-report.md)
+
+Supplemental [browser previews](docs/assets/path-highlight.gif) show the same plugin layout and interaction using a browser test stand. [Theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Browser video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf). They are test-stand captures, not Obsidian recordings.
 
 ## Features
 
 - Compact flowchart spacing with readable labels.
 - Aligns branches leaving decision nodes and routes connectors with rounded corners.
-- Highlights the ancestors leading to the node under the pointer or keyboard focus. Moving across an edge updates the highlighted path.
+- Highlights ancestors of the hovered or focused node by traversing forward layout edges. Return/back edges are excluded from ancestor traversal, though a hovered edge itself can still highlight. Moving across an edge updates the highlighted path.
 - Works with light and dark Obsidian themes.
 - Leaves non-flowchart Mermaid diagrams to Mermaid's normal renderer.
 - Per-diagram opt-out with `%% mfe:off`.
