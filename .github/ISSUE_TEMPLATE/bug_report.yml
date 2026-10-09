@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a rendering or interaction problem
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please remove private note content and share a minimal artificial Mermaid example.
+  - type: input
+    id: obsidian
+    attributes:
+      label: Obsidian version
+      placeholder: 1.x.x
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and device
+      placeholder: macOS desktop, Android phone, etc.
+    validations:
+      required: true
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin version
+    validations:
+      required: true
+  - type: textarea
+    id: diagram
+    attributes:
+      label: Minimal Mermaid flowchart
+      description: Use artificial labels. Do not include confidential note contents.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors or screenshots
+      description: Redact personal or vault information.
+    validations:
+      required: false
