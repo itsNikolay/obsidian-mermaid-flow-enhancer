@@ -387,9 +387,13 @@ test('CSS restores faded nodes for print and disables motion when reduced motion
   const node = page.locator('.node[data-mpe-key="A"]');
   await page.emulateMedia({ media: 'screen' });
   expect(await node.evaluate(el => getComputedStyle(el).opacity)).toBe('0.22');
+  await node.evaluate(el => el.classList.add('mpe-on-path'));
+  await page.locator('.flowchart-link').first().evaluate(el => el.classList.add('mpe-on-path'));
   await page.emulateMedia({ media: 'print' });
   expect(await node.evaluate(el => getComputedStyle(el).opacity)).toBe('1');
   expect(await node.evaluate(el => getComputedStyle(el).transitionProperty)).toBe('none');
+  expect(await node.locator('rect.basic').evaluate(el => getComputedStyle(el).stroke)).toBe('rgb(170, 170, 170)');
+  expect(await page.locator('.flowchart-link').first().evaluate(el => getComputedStyle(el).stroke)).toBe('rgb(204, 204, 204)');
   await page.emulateMedia({ media: 'screen', reducedMotion: 'reduce' });
   expect(await node.evaluate(el => getComputedStyle(el).transitionProperty)).toBe('none');
 });

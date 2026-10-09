@@ -1,5 +1,6 @@
 export default {
   extends: ['stylelint-config-standard'],
+  rules: { 'declaration-no-important': true },
   overrides: [
     {
       files: ['styles.css'],

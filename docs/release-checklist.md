@@ -35,7 +35,7 @@ Directory releases use normal GitHub releases with numeric `x.y.z` tags. Keep be
 
 The downloaded release is installed and enabled in the disposable Downloads demo vault on Obsidian 1.14.2/macOS. Reload succeeds, enhanced SVG is present with `filter:none`, and the developer error log is empty. Demo preferences were preserved after the install test. The public listing now exposes an active Add to Obsidian link. The CLI catalogue install test reported “Plugin not found in community plugins”; direct catalogue installation remains unverified, so the release files were installed manually. No original user-vault plugin files were replaced.
 
-The official 0.1.1 directory scan completed on 2026-10-09 and made 0.1.1 the current version. Build verification reproduced the release JavaScript byte-for-byte. The remaining finding is a CSS warning about scoped `!important`, whose necessity and isolation are documented and browser-tested.
+The official 0.1.1 directory scan completed on 2026-10-09 and made 0.1.1 the current version. Build verification reproduced the release JavaScript byte-for-byte. The remaining finding is a CSS warning about scoped `!important`, in that release. The current source removes these declarations; publish a new release and verify its directory scan to close the finding.
 
 ## 0.1.2 release verification
 

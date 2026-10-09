@@ -1,7 +1,10 @@
+/* The impossible compound ID in :not() raises specificity above Mermaid SVG
+ * ID rules without excluding nodes or changing generated diagram IDs. */
+
 /* Neutral surfaces, clear typography, and restrained blue path accents.
  * The renderer establishes font metrics and geometry before styling. */
 
-.mermaid svg.mfe-enhanced {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #1f2020;
   --mpe-border: #aaa;
   --mpe-group: #292c33;
@@ -20,10 +23,10 @@
   display: block;
   max-width: 100%;
   height: auto;
-  filter: none !important;
+  filter: none;
 }
 
-.theme-dark .mermaid svg.mfe-enhanced {
+.theme-dark .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #273449;
   --mpe-border: #7186a2;
   --mpe-group: #1d2838;
@@ -35,7 +38,7 @@
   --mpe-highlight: #8acbff;
 }
 
-.theme-light .mermaid svg.mfe-enhanced {
+.theme-light .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #fff;
   --mpe-border: #a0a7b0;
   --mpe-group: #eee;
@@ -52,133 +55,133 @@
 
 /* Keep font metrics established by the renderer to avoid clipped labels. */
 
-.mermaid svg.mfe-enhanced .node :is(rect, circle, ellipse, polygon, path),
-.mermaid svg.mfe-enhanced :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
-  fill: var(--mpe-node) !important;
-  stroke: var(--mpe-border) !important;
-  stroke-width: 1px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, circle, ellipse, polygon, path),
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
+  fill: var(--mpe-node);
+  stroke: var(--mpe-border);
+  stroke-width: 1px;
 }
 
-.mermaid svg.mfe-enhanced .cluster rect {
-  fill: var(--mpe-group) !important;
-  stroke: var(--mpe-group-border) !important;
-  stroke-width: 1px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .cluster rect {
+  fill: var(--mpe-group);
+  stroke: var(--mpe-group-border);
+  stroke-width: 1px;
 }
 
-.mermaid svg.mfe-enhanced :is(.label, .nodeLabel, .edgeLabel, .cluster-label, .actor, .messageText, .noteText, .loopText, .labelText),
-.mermaid svg.mfe-enhanced :is(.nodeLabel, .edgeLabel, .cluster-label) p {
-  color: var(--mpe-text) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.label, .nodeLabel, .edgeLabel, .cluster-label, .actor, .messageText, .noteText, .loopText, .labelText),
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.nodeLabel, .edgeLabel, .cluster-label) p {
+  color: var(--mpe-text);
 }
 
-.mermaid svg.mfe-enhanced text {
-  fill: var(--mpe-text) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) text {
+  fill: var(--mpe-text);
 }
 
-.mermaid svg.mfe-enhanced :is(.flowchart-link, .edgePath .path, .messageLine0, .messageLine1, .transition) {
-  stroke: var(--mpe-line) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.flowchart-link, .edgePath .path, .messageLine0, .messageLine1, .transition) {
+  stroke: var(--mpe-line);
   stroke-linecap: butt;
   stroke-linejoin: miter;
 }
 
-.mermaid svg.mfe-enhanced .actor-line {
-  stroke: var(--mpe-border) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .actor-line {
+  stroke: var(--mpe-border);
 }
 
-.mermaid svg.mfe-enhanced marker :is(path, polygon) {
-  fill: var(--mpe-line) !important;
-  stroke: var(--mpe-line) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) marker :is(path, polygon) {
+  fill: var(--mpe-line);
+  stroke: var(--mpe-line);
 }
 
-.mermaid svg.mfe-enhanced :is(.edgeLabel, .edgeLabel p) {
-  background-color: var(--mpe-label) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.edgeLabel, .edgeLabel p) {
+  background-color: var(--mpe-label);
 }
 
-.mermaid svg.mfe-enhanced .labelBkg {
-  fill: var(--mpe-label) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .labelBkg {
+  fill: var(--mpe-label);
 }
 
-.mermaid svg.mfe-enhanced rect.note {
-  fill: var(--mpe-note) !important;
-  stroke: var(--mpe-group-border) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) rect.note {
+  fill: var(--mpe-note);
+  stroke: var(--mpe-group-border);
 }
 
-.mermaid svg.mfe-enhanced .loopLine {
-  stroke: var(--mpe-border) !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .loopLine {
+  stroke: var(--mpe-border);
 }
 
 /* Consistent connector weights and a quiet surface shadow. */
 
-.mermaid svg.mfe-enhanced .flowchart-link {
-  stroke-width: 1px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .flowchart-link {
+  stroke-width: 1px;
 }
 
-.mermaid svg.mfe-enhanced .node rect {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node rect {
   rx: 5px;
   ry: 5px;
 }
 
-.theme-dark .mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse) {
+.theme-dark .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse) {
   filter: drop-shadow(0 2px 3px #00000038);
 }
 
-.mermaid svg.mfe-enhanced .nodeLabel p {
-  line-height: 1.5 !important;
-  margin: 0 !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .nodeLabel p {
+  line-height: 1.5;
+  margin: 0;
 }
 
-.theme-light .mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse) {
+.theme-light .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse) {
   filter: drop-shadow(1px 1px 1px #00000018);
 }
 
-.mermaid svg.mfe-enhanced .edgeLabel p {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .edgeLabel p {
   border-radius: 3px;
   font-weight: 500;
 }
 
 /* Keep transitions on the base state so leaving a path is smooth too. */
 
-.mermaid svg.mfe-enhanced :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
   transition: opacity var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse),
-.mermaid svg.mfe-enhanced .flowchart-link {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse),
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .flowchart-link {
   transition: opacity var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), stroke var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), stroke-width var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.theme-dark .mermaid svg.mfe-enhanced .flowchart-link {
-  stroke-width: 1.25px !important;
+.theme-dark .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .flowchart-link {
+  stroke-width: 1.25px;
 }
 
-.mermaid svg.mfe-enhanced.mpe-tracing :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style).mpe-tracing :where(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
   opacity: 0.22;
 }
 
-.mermaid svg.mfe-enhanced.mpe-tracing .mpe-on-path {
-  opacity: 1 !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style).mpe-tracing .mpe-on-path {
+  opacity: 1;
 }
 
-.mermaid svg.mfe-enhanced.mpe-tracing .node.mpe-on-path :is(rect, polygon, circle, ellipse) {
-  stroke: var(--mpe-highlight) !important;
-  stroke-width: 1.6px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style).mpe-tracing .node.mpe-on-path :is(rect, polygon, circle, ellipse) {
+  stroke: var(--mpe-highlight);
+  stroke-width: 1.6px;
 }
 
-.mermaid svg.mfe-enhanced.mpe-tracing .flowchart-link.mpe-on-path {
-  stroke: var(--mpe-highlight) !important;
-  stroke-width: 1.8px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style).mpe-tracing .flowchart-link.mpe-on-path {
+  stroke: var(--mpe-highlight);
+  stroke-width: 1.8px;
 }
 
-.mermaid svg.mfe-enhanced .mpe-decision:focus-visible {
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .mpe-decision:focus-visible {
   outline: none;
 }
 
-.mermaid svg.mfe-enhanced .mpe-decision:focus-visible polygon {
-  stroke-width: 2px !important;
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .mpe-decision:focus-visible polygon {
+  stroke-width: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mermaid svg.mfe-enhanced :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
-  .mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse) {
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse) {
     transition: none;
   }
 }
@@ -186,19 +189,19 @@
 /* Printing must never capture a transient hover/focus state. */
 
 @media print {
-  .mermaid svg.mfe-enhanced :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
-    opacity: 1 !important;
-    transition: none !important;
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style#mfe-print-state) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+    opacity: 1;
+    transition: none;
   }
 
-  .mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse) {
-    stroke: var(--mpe-border) !important;
-    stroke-width: 1px !important;
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style#mfe-print-state) .node :is(rect, polygon, circle, ellipse) {
+    stroke: var(--mpe-border);
+    stroke-width: 1px;
     filter: none;
   }
 
-  .mermaid svg.mfe-enhanced .flowchart-link {
-    stroke: var(--mpe-line) !important;
-    stroke-width: 1px !important;
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style#mfe-print-state) .flowchart-link {
+    stroke: var(--mpe-line);
+    stroke-width: 1px;
   }
 }

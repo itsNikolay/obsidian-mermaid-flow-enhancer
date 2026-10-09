@@ -41,7 +41,7 @@ The plugin was enabled in a clean Obsidian 1.14.2 vault on macOS. Its settings a
 
 ## Directory review and 0.1.1
 
-The directory completed its 0.1.0 release scan without errors and reproduced `main.js` byte-for-byte. Its CSS warnings identified `:has()` and `!important`; its release recommendation requested artifact attestations. Version 0.1.1 removes `:has()` by scoping directly to enhanced SVG roots and adds GitHub provenance attestations. Scoped `!important` remains necessary to override Mermaid’s generated SVG ID rules and Obsidian’s native dark filter.
+The directory completed its 0.1.0 release scan without errors and reproduced `main.js` byte-for-byte. Its CSS warnings identified `:has()` and `!important`; its release recommendation requested artifact attestations. Version 0.1.1 removes `:has()` by scoping directly to enhanced SVG roots and adds GitHub provenance attestations. At that release, scoped `!important` overrode Mermaid’s generated SVG ID rules and Obsidian’s native dark filter. The current source replaces these declarations with enhanced-SVG selectors of higher specificity, with an additional specificity level for print-state resets. Stylelint rejects new `!important` declarations.
 
 For 0.1.1, 17 unit tests and 12 Chromium tests pass. The additional browser test checks actual faded opacity and highlighted strokes, including isolation from regular Mermaid SVGs.
 
