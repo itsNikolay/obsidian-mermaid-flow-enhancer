@@ -4,5 +4,6 @@
 
 - Initial beta release of the Obsidian Mermaid Flow Enhancer.
 - Adds compact flowchart layout adjustments, aligned decision branches, rounded orthogonal connectors, and ancestor path highlighting.
+- Prevents Obsidian’s native dark-mode SVG inversion from reversing the plugin’s theme colors.
 - Adds demo diagrams and automated unit and browser integration checks.
 - External user testing and Obsidian Community plugins directory submission are pending.
