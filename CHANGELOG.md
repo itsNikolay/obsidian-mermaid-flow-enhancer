@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 (beta)
+
+- Refine the dark theme with slate-blue surfaces, clear text, softer shadows, and restrained path accents. Decision nodes share the same palette as other nodes.
+- Attach connectors to the centers of node sides, with smaller arrowheads anchored at the boundary.
+- Simplify return routes in horizontal and vertical flowcharts while preserving rounded corners and aligned branch labels.
+
 ## 0.1.1 (beta)
 
 - Scope styling directly to enhanced SVGs instead of using `:has()` selectors.

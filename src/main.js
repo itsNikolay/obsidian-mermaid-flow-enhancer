@@ -4,7 +4,7 @@ const { Plugin, loadMermaid } = require("obsidian");
 const defaults = {
   theme: "dark",
   fontFamily: '"trebuchet ms", verdana, arial, sans-serif',
-  themeVariables: { fontSize: "16px", darkMode: true, primaryColor: "#1f2020", primaryTextColor: "#cccccc", primaryBorderColor: "#aaaaaa", lineColor: "#cccccc" },
+  themeVariables: { fontSize: "16px", darkMode: true, primaryColor: "#273449", primaryTextColor: "#edf2fa", primaryBorderColor: "#7186a2", lineColor: "#a6b8cf" },
   flowchart: {
     curve: "step", nodeSpacing: 28, rankSpacing: 26,
     padding: 10, diagramPadding: 4, wrappingWidth: 140, useMaxWidth: false,
@@ -47,10 +47,10 @@ module.exports = class MermaidFlowEnhancer extends Plugin {
         themeVariables: {
           ...defaults.themeVariables,
           darkMode: dark,
-          primaryColor: dark ? "#1f2020" : "#f5f5f5",
-          primaryTextColor: dark ? "#cccccc" : "#333333",
-          primaryBorderColor: dark ? "#aaaaaa" : "#888888",
-          lineColor: dark ? "#cccccc" : "#555555",
+          primaryColor: dark ? "#273449" : "#f5f5f5",
+          primaryTextColor: dark ? "#edf2fa" : "#333333",
+          primaryBorderColor: dark ? "#7186a2" : "#888888",
+          lineColor: dark ? "#a6b8cf" : "#555555",
         },
       };
       const configured = prefix + `%%{init: ${JSON.stringify(configuredDefaults)}}%%\n` + source.slice(prefix.length);

@@ -19,12 +19,13 @@ function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel
   const vertical = /^(TD|TB|BT)$/.test(direction);
   const axis = vertical ? 1 : 0;
   const cross = 1 - axis;
-  const sign = /^(BT|RL)$/.test(direction) ? -1 : 1;
   const first = points[0], last = points[points.length - 1];
-  if (sign * (last[axis] - first[axis]) <= 0) return null;
+  const sign = Math.sign(last[axis] - first[axis]);
+  if (!sign) return null;
   const a = sourceLimit ?? first[axis], b = targetLimit ?? last[axis];
-  if (sign * (b - a) < 0) return null;
-  const middle = branchLevel ?? (a + b) / 2;
+  if (sign * (b - a) <= 0) return null;
+  const level = branchLevel ?? (a + b) / 2;
+  const middle = sign * (level - a) > 0 && sign * (b - level) > 0 ? level : (a + b) / 2;
   const p = [...first], q = [...last];
   p[axis] = middle; q[axis] = middle;
   const route = Math.abs(first[cross] - last[cross]) < 0.01
@@ -33,23 +34,125 @@ function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel
     .map((p, i) => `${i ? "L" : "M"}${p.join(",")}`).join("");
 }
 
-function nodeLimit(doc, key, direction, outgoing) {
+function transformOffset(element) {
+  const offset = [0, 0];
+  for (let el = element; el; el = el.parentNode) {
+    const transform = el.getAttribute?.("transform") || "";
+    if (!transform) continue;
+    const t = transform.match(/^\s*translate\(\s*([-+\d.eE]+)(?:[,\s]+([-+\d.eE]+))?\s*\)\s*$/);
+    if (!t) return undefined;
+    offset[0] += Number(t[1]);
+    offset[1] += Number(t[2] ?? 0);
+  }
+  return offset;
+}
+
+function polygonHasSideCenter(points, axis, side, centerCross) {
+  const min = Math.min(...points.map(point => point[axis]));
+  const max = Math.max(...points.map(point => point[axis]));
+  const boundary = side === "min" ? min : max;
+  const close = (a, b) => Math.abs(a - b) < 0.01;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i], b = points[(i + 1) % points.length];
+    const aa = a[axis], ba = b[axis], ac = a[1 - axis], bc = b[1 - axis];
+    if (close(aa, boundary) && close(ba, boundary) &&
+        centerCross >= Math.min(ac, bc) - 0.01 && centerCross <= Math.max(ac, bc) + 0.01) return true;
+    if (close(aa, boundary) && close(ac, centerCross)) return true;
+    if (close(ba, boundary) && close(bc, centerCross)) return true;
+  }
+  return false;
+}
+
+function nodeBounds(doc, key) {
   const node = [...doc.querySelectorAll("g.node")].find(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] === key);
   if (!node) return undefined;
-  const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
-  const shape = node.querySelector("polygon, rect");
+  const shape = node.querySelector("polygon, rect, circle, ellipse");
   if (!shape) return undefined;
-  let offset = 0;
-  for (let el = shape; el && el !== node.parentNode; el = el.parentNode) {
-    const t = (el.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
-    if (t) offset += Number(t[axis + 1]);
+  const offset = transformOffset(shape);
+  if (!offset) return undefined;
+  let x, y;
+  if (shape.tagName === "polygon") {
+    const source = (shape.getAttribute("points") || "").trim().split(/\s+/)
+      .map(point => point.split(",").map(Number));
+    if (source.length > 1 && source[0][0] === source.at(-1)[0] && source[0][1] === source.at(-1)[1]) source.pop();
+    if (source.length < 3 || source.some(point => point.length !== 2 || !point.every(Number.isFinite))) return undefined;
+    x = source.map(point => point[0]); y = source.map(point => point[1]);
+    const center = [(Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2];
+    for (const axis of [0, 1]) {
+      if (!polygonHasSideCenter(source, axis, "min", center[1 - axis]) ||
+          !polygonHasSideCenter(source, axis, "max", center[1 - axis])) return undefined;
+    }
+  } else if (shape.tagName === "circle") {
+    const values = ["cx", "cy", "r"].map(name => shape.getAttribute(name));
+    if (values.some(value => value === null)) return undefined;
+    const [cx, cy, r] = values.map(Number);
+    if (![cx, cy, r].every(Number.isFinite) || r < 0) return undefined;
+    x = [cx - r, cx + r]; y = [cy - r, cy + r];
+  } else if (shape.tagName === "ellipse") {
+    const values = ["cx", "cy", "rx", "ry"].map(name => shape.getAttribute(name));
+    if (values.some(value => value === null)) return undefined;
+    const [cx, cy, rx, ry] = values.map(Number);
+    if (![cx, cy, rx, ry].every(Number.isFinite) || rx < 0 || ry < 0) return undefined;
+    x = [cx - rx, cx + rx]; y = [cy - ry, cy + ry];
+  } else {
+    const values = ["x", "y", "width", "height"].map(name => shape.getAttribute(name));
+    if (values.some(value => value === null)) return undefined;
+    const [left, top, w, h] = values.map(Number);
+    if (![left, top, w, h].every(Number.isFinite) || w < 0 || h < 0) return undefined;
+    x = [left, left + w]; y = [top, top + h];
   }
-  const values = shape.tagName === "polygon"
-    ? (shape.getAttribute("points") || "").trim().split(/\s+/).map(p => Number(p.split(",")[axis]))
-    : [Number(shape.getAttribute(axis ? "y" : "x")),
-       Number(shape.getAttribute(axis ? "y" : "x")) + Number(shape.getAttribute(axis ? "height" : "width"))];
+  const min = [Math.min(...x) + offset[0], Math.min(...y) + offset[1]];
+  const max = [Math.max(...x) + offset[0], Math.max(...y) + offset[1]];
+  return { node, center: [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2], min, max };
+}
+
+function nodeLimit(doc, key, direction, outgoing) {
+  const bounds = nodeBounds(doc, key);
+  if (!bounds) return undefined;
+  const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
   const forward = !/^(BT|RL)$/.test(direction);
-  return offset + ((outgoing === forward) ? Math.max(...values) : Math.min(...values));
+  return (outgoing === forward) ? bounds.max[axis] : bounds.min[axis];
+}
+
+function centerAnchor(bounds, direction, travelSign, outgoing) {
+  const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
+  const cross = 1 - axis;
+  const sideSign = outgoing ? travelSign : -travelSign;
+  const anchor = [...bounds.center];
+  anchor[axis] = sideSign > 0 ? bounds.max[axis] : bounds.min[axis];
+  anchor[cross] = bounds.center[cross];
+  return anchor;
+}
+
+function returnLanePath(points, direction, from, to, offset = [0, 0]) {
+  const vertical = /^(TD|TB|BT)$/.test(direction);
+  const axis = vertical ? 1 : 0;
+  const cross = 1 - axis;
+  const first = points[0], last = points[points.length - 1];
+  const values = points.map(point => point[cross]);
+  const high = Math.max(...values), low = Math.min(...values);
+  const lane = high > Math.max(first[cross], last[cross]) + 0.01 ? high
+    : low < Math.min(first[cross], last[cross]) - 0.01 ? low : null;
+  if (lane === null) return null;
+  if (!from || !to) return null;
+  const outer = lane + offset[cross] > (from.center[cross] + to.center[cross]) / 2 ? "max" : "min";
+  const source = [...from.center], target = [...to.center];
+  source[cross] = from[outer][cross];
+  target[cross] = to[outer][cross];
+  // Native ports can sit inside a wide block's cross-axis extent. Move the
+  // return lane outside both blocks so the final segment approaches from outside.
+  const laneRoot = outer === "max"
+    ? Math.max(lane + offset[cross], from.max[cross] + 16, to.max[cross] + 16)
+    : Math.min(lane + offset[cross], from.min[cross] - 16, to.min[cross] - 16);
+  const bend1 = [...source], bend2 = [...target];
+  bend1[cross] = laneRoot;
+  bend2[cross] = laneRoot;
+  for (const point of [source, target, bend1, bend2]) {
+    point[0] -= offset[0]; point[1] -= offset[1];
+  }
+  return [source, bend1, bend2, target]
+    .filter((point, i, all) => !i || point.some((v, j) => Math.abs(v - all[i - 1][j]) > 0.001))
+    .map((point, i) => `${i ? "L" : "M"}${point.join(",")}`).join("");
 }
 
 function roundPath(d, radius = 4) {
@@ -76,6 +179,20 @@ function roundPath(d, radius = 4) {
   return path + `L${points[points.length - 1].join(",")}`;
 }
 
+// Mermaid may already round its orthogonal routes with quadratic corners.
+// Retain their control points when choosing an outer lane, then recompute
+// centered routes. Unsupported curve commands keep the original path.
+function routePoints(d) {
+  const number = "[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?";
+  const command = new RegExp(`([ML])\\s*(${number})[\\s,]+(${number})|Q\\s*(${number})[\\s,]+(${number})[\\s,]+(${number})[\\s,]+(${number})`, "g");
+  const matches = [...d.matchAll(command)];
+  if (!matches.length || matches[0][1] !== "M" || d.replace(command, "").trim()) return null;
+  if (matches.slice(1).some(m => m[1] === "M")) return null;
+  return matches.flatMap(m => m[1] ? [[Number(m[2]), Number(m[3])]]
+    : [[Number(m[4]), Number(m[5])], [Number(m[6]), Number(m[7])]])
+    .filter((point, i, all) => !i || point.some((v, axis) => Math.abs(v - all[i - 1][axis]) > 0.001));
+}
+
 function styleSvg(svg, direction, settings = {}) {
   const compactLayout = settings.compactLayout !== false;
   // HTML labels can contain this HTML-only entity; XML has no such entity.
@@ -84,7 +201,6 @@ function styleSvg(svg, direction, settings = {}) {
   if (doc.querySelector("parsererror")) return svg;
   // Equal-rank nodes can have different heights. Align their incoming sides,
   // rather than their centers, so both arrows finish on the same level.
-  const alignedNodes = new Map();
   const layoutAxis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
   const layoutSign = /^(BT|RL)$/.test(direction) ? -1 : 1;
   const layoutNodes = [...doc.querySelectorAll("g.node")].map(node => {
@@ -97,7 +213,7 @@ function styleSvg(svg, direction, settings = {}) {
     const edge = resolveEdge(doc, path);
     if (edge) return { from: layoutByKey.get(edge[1]), to: layoutByKey.get(edge[2]) };
   }).filter(e => e?.from && e?.to);
-  const compactNodes = new Map();
+  const alignedTargets = new Set();
   for (const node of doc.querySelectorAll("g.node")) {
     const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     if (key) {
@@ -119,8 +235,6 @@ function styleSvg(svg, direction, settings = {}) {
       ? Number(label.getAttribute("height")) / (2 * hh) / (0.99 - widthRatio) : 1;
     const scale = Math.min(1, Math.max(0.76, needed));
     polygon.setAttribute("points", points.map(p => `${p[0]},${cy + (p[1] - cy) * scale}`).join(" "));
-    const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
-    if (t && key) compactNodes.set(key, { center: [Number(t[1]), Number(t[2])], scale: [1, scale] });
   }
   for (const source of compactLayout ? layoutNodes : []) {
     const targets = [...new Set(layoutEdges.filter(e => e.from === source &&
@@ -133,13 +247,12 @@ function styleSvg(svg, direction, settings = {}) {
     if (!limits.every(Number.isFinite)) continue;
     const level = layoutSign > 0 ? Math.min(...limits) : Math.max(...limits);
     targets.forEach((n, i) => {
-      if (alignedNodes.has(n.key)) return;
+      if (alignedTargets.has(n.key)) return;
       const delta = [0, 0];
       delta[layoutAxis] = level - limits[i];
       n.center[layoutAxis] += delta[layoutAxis];
       n.node.setAttribute("transform", `translate(${n.center.join(",")})`);
-      alignedNodes.set(n.key, delta);
-      if (compactNodes.has(n.key)) compactNodes.get(n.key).center = [...n.center];
+      alignedTargets.add(n.key);
     });
   }
   // Remove zero-length step segments so marker orientation follows the last
@@ -147,6 +260,8 @@ function styleSvg(svg, direction, settings = {}) {
   const number = "[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?";
   const segment = new RegExp(`([ML])\\s*(${number})[\\s,]+(${number})`, "g");
   const labelPositions = new Map();
+  const routeExtent = [];
+
   // All forward branches from one condition share the same bend/label level.
   // Use the nearest target so neither branch crosses its destination block.
   const branchLevels = new Map();
@@ -169,44 +284,52 @@ function styleSvg(svg, direction, settings = {}) {
   }
   for (const path of compactLayout ? doc.querySelectorAll("path.flowchart-link, .edgePath path.path") : []) {
     const d = path.getAttribute("d") || "";
-    const matches = [...d.matchAll(segment)];
-    if (!matches.length || d.replace(segment, "").trim()) continue;
-    const points = matches.map(m => [Number(m[2]), Number(m[3])])
-      .filter((p, i, all) => !i || p[0] !== all[i - 1][0] || p[1] !== all[i - 1][1]);
+    const points = routePoints(d);
+    if (!points || points.length < 2) continue;
     const edge = resolveEdge(doc, path);
-    if (edge) {
-      for (const [key, index] of [[edge[1], 0], [edge[2], points.length - 1]]) {
-        const delta = alignedNodes.get(key);
-        if (delta) points[index] = points[index].map((v, i) => v + delta[i]);
-        const compact = compactNodes.get(key);
-        if (compact) points[index] = points[index].map((v, i) => compact.center[i] + (v - compact.center[i]) * compact.scale[i]);
+    let routed = null;
+    if (direction && edge) {
+      const from = nodeBounds(doc, edge[1]), to = nodeBounds(doc, edge[2]);
+      const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
+      if (!from || !to) continue;
+      const delta = to.center[axis] - from.center[axis];
+      if (Math.abs(delta) < 0.01) continue;
+      const travelSign = Math.sign(delta);
+      const pathOffset = transformOffset(path);
+      if (!pathOffset) continue;
+      points[0] = centerAnchor(from, direction, travelSign, true).map((v, i) => v - pathOffset[i]);
+      points[points.length - 1] = centerAnchor(to, direction, travelSign, false).map((v, i) => v - pathOffset[i]);
+      const forward = sign * delta > 0;
+      if (forward) {
+        const sourceLimit = nodeLimit(doc, edge[1], direction, true) - pathOffset[axis];
+        const targetLimit = nodeLimit(doc, edge[2], direction, false) - pathOffset[axis];
+        routed = orthogonalPath(points, direction,
+          sourceLimit, targetLimit,
+          branchLevels.has(edge[1]) ? branchLevels.get(edge[1]) - pathOffset[axis] : undefined);
+      } else {
+        // Keep Mermaid's outer return lane and remove the small stairs.
+        routed = returnLanePath(points, direction, from, to, pathOffset);
       }
-    }
-    let routed = direction && edge ? orthogonalPath(points, direction,
-      nodeLimit(doc, edge[1], direction, true), nodeLimit(doc, edge[2], direction, false),
-      branchLevels.get(edge[1])) : null;
-    if (!routed && /^(TD|TB|BT)$/.test(direction) && sign * (points.at(-1)[1] - points[0][1]) < 0) {
-      const first = points[0], last = points.at(-1);
-      // Preserve the outer lane chosen by Mermaid, removing its small stairs.
-      const xs = points.map(p => p[0]);
-      const right = Math.max(...xs), left = Math.min(...xs);
-      const lane = right > Math.max(first[0], last[0]) + 0.01 ? right
-        : left < Math.min(first[0], last[0]) - 0.01 ? left : null;
-      if (lane !== null) routed = `M${first}L${lane},${first[1]}L${lane},${last[1]}L${last}`;
+      if (!routed) continue;
     }
     if (routed) {
       const route = [...routed.matchAll(segment)].map(m => [Number(m[2]), Number(m[3])]);
       const a = route.length > 2 ? route[1] : route[0];
       const b = route.length > 2 ? route[2] : route[1];
-      labelPositions.set(path.getAttribute("data-id") || path.id, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+      const offset = transformOffset(path) || [0, 0];
+      labelPositions.set(path.getAttribute("data-id") || path.id,
+        [(a[0] + b[0]) / 2 + offset[0], (a[1] + b[1]) / 2 + offset[1]]);
+      routeExtent.push(...route.map(point => point.map((value, axis) => value + offset[axis])));
     }
-    path.setAttribute("d", roundPath(routed || points.map((p, i) => `${i ? "L" : "M"}${p.join(",")}`).join("")));
+    path.setAttribute("d", routed ? roundPath(routed) : roundPath(d));
   }
   // Mermaid places labels for its original route. Move them with our route.
   for (const label of doc.querySelectorAll(".edgeLabels > .edgeLabel")) {
     const key = label.getAttribute("data-id") || label.querySelector("[data-id]")?.getAttribute("data-id");
     const position = labelPositions.get(key);
-    if (position) label.setAttribute("transform", `translate(${position.join(",")})`);
+    const offset = transformOffset(label.parentNode);
+    if (position && offset) label.setAttribute("transform",
+      `translate(${position.map((value, axis) => value - offset[axis]).join(",")})`);
   }
   for (const node of doc.querySelectorAll("g.node")) {
     const polygon = node.querySelector("polygon");
@@ -216,6 +339,23 @@ function styleSvg(svg, direction, settings = {}) {
       node.classList.add("mpe-decision");
       node.setAttribute("tabindex", "0");
     }
+  }
+  // A centered return port can need a slightly wider outer lane. Include that
+  // lane in the SVG canvas instead of clipping its line or arrow at the edge.
+  const root = doc.documentElement;
+  const viewBox = (root.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+  if (routeExtent.length && viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+    const [x, y, width, height] = viewBox;
+    const left = Math.min(x, ...routeExtent.map(p => p[0] - 4));
+    const top = Math.min(y, ...routeExtent.map(p => p[1] - 4));
+    const right = Math.max(x + width, ...routeExtent.map(p => p[0] + 4));
+    const bottom = Math.max(y + height, ...routeExtent.map(p => p[1] + 4));
+    const sizes = [right - left, bottom - top];
+    root.setAttribute("viewBox", `${left} ${top} ${sizes.join(" ")}`);
+    for (const [name, size] of [["width", sizes[0]], ["height", sizes[1]]]) {
+      if (/^[\d.]+$/.test(root.getAttribute(name) || "")) root.setAttribute(name, String(size));
+    }
+    if (Math.abs(parseFloat(root.style.maxWidth) - width) < 1) root.style.maxWidth = `${sizes[0]}px`;
   }
   const hierarchyNodes = [...doc.querySelectorAll("g.node[data-mpe-key]")];
   const axis = /^(TD|TB|BT)$/.test(direction) ? 2 : 1;
@@ -233,13 +373,13 @@ function styleSvg(svg, direction, settings = {}) {
   // Broad filled triangles, independent of connector stroke width.
   for (const marker of doc.querySelectorAll('marker[id$="pointEnd"], marker[id$="pointStart"]')) {
     marker.setAttribute("markerUnits", "userSpaceOnUse");
-    marker.setAttribute("markerWidth", "12");
-    marker.setAttribute("markerHeight", "12");
+    marker.setAttribute("markerWidth", "8");
+    marker.setAttribute("markerHeight", "8");
     marker.setAttribute("viewBox", "0 0 10 10");
     marker.setAttribute("refY", "5");
     marker.setAttribute("orient", "auto");
     const start = marker.id.endsWith("pointStart");
-    marker.setAttribute("refX", start ? "1" : "9");
+    marker.setAttribute("refX", start ? "0" : "10");
     const path = marker.querySelector("path");
     if (path) {
       path.setAttribute("d", start ? "M10 0 L0 5 L10 10 Z" : "M0 0 L10 5 L0 10 Z");
@@ -291,4 +431,4 @@ function wrapDecisions(source) {
 }
 
 
-module.exports = { orthogonalPath, roundPath, nodeLimit, styleSvg, widenSingleRectangles, wrapDecisions };
+module.exports = { routePoints, orthogonalPath, roundPath, nodeLimit, nodeBounds, centerAnchor, returnLanePath, styleSvg, widenSingleRectangles, wrapDecisions };

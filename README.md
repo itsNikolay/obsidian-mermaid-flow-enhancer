@@ -19,9 +19,9 @@ Supplemental [browser previews](docs/assets/path-highlight.gif) show the same pl
 ## Features
 
 - Compact flowchart spacing with readable labels.
-- Aligns branches leaving decision nodes and routes connectors with rounded corners.
+- Aligns branches leaving decision nodes and routes connectors with rounded corners and centered side attachments.
 - Highlights ancestors of the hovered or focused node by traversing forward layout edges. Return/back edges are excluded from ancestor traversal, though a hovered edge itself can still highlight. Moving across an edge updates the highlighted path.
-- Works with light and dark Obsidian themes.
+- Works with light and dark Obsidian themes, with a uniform slate-blue palette in dark mode.
 - Leaves non-flowchart Mermaid diagrams to Mermaid's normal renderer.
 - Per-diagram opt-out with `%% mfe:off`.
 

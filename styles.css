@@ -1,6 +1,5 @@
-/* Mermaid appearance matched to the supplied Markdown Preview Enhanced screenshot.
- * The companion plugin sets font, wrapping and geometry before rendering.
- */
+/* Neutral surfaces, clear typography, and restrained blue path accents.
+ * The renderer establishes font metrics and geometry before styling. */
 .mermaid svg.mfe-enhanced {
   --mpe-node: #1f2020;
   --mpe-border: #aaaaaa;
@@ -22,15 +21,15 @@
   filter: none !important;
 }
 .theme-dark .mermaid svg.mfe-enhanced {
-  --mpe-node: var(--background-secondary, #252830);
-  --mpe-border: #7d8796;
-  --mpe-group: var(--background-primary-alt, #20232a);
-  --mpe-group-border: #596474;
-  --mpe-note: #383326;
-  --mpe-text: var(--text-normal, #e0e4eb);
-  --mpe-line: #b3bdca;
+  --mpe-node: #273449;
+  --mpe-border: #7186a2;
+  --mpe-group: #1d2838;
+  --mpe-group-border: #43566f;
+  --mpe-note: #373426;
+  --mpe-text: #edf2fa;
+  --mpe-line: #a6b8cf;
   --mpe-label: var(--background-primary, #1e2127);
-  --mpe-highlight: #83b9e8;
+  --mpe-highlight: #8acbff;
 }
 .theme-light .mermaid svg.mfe-enhanced {
   --mpe-node: #ffffff;
@@ -82,12 +81,13 @@
 }
 .mermaid svg.mfe-enhanced .loopLine { stroke: var(--mpe-border) !important; }
 
-/* Thin connectors and the subtle node shadow visible in the reference. */
+/* Consistent connector weights and a quiet surface shadow. */
 .mermaid svg.mfe-enhanced .flowchart-link { stroke-width: 1px !important; }
-.mermaid svg.mfe-enhanced .node rect { rx: 4px; ry: 4px; }
+.mermaid svg.mfe-enhanced .node rect { rx: 5px; ry: 5px; }
+.theme-dark .mermaid svg.mfe-enhanced .flowchart-link { stroke-width: 1.25px !important; }
 
 .theme-dark .mermaid svg.mfe-enhanced .node :is(rect, polygon, circle, ellipse) {
-  filter: drop-shadow(1px 2px 2px #00000040);
+  filter: drop-shadow(0px 2px 3px #00000038);
 }
 .mermaid svg.mfe-enhanced .nodeLabel p { line-height: 1.5 !important; margin: 0 !important; }
 

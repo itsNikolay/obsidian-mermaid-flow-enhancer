@@ -111,13 +111,135 @@ test('all Mermaid directions produce valid paths and marker geometry', async ({ 
         valid: !doc.querySelector('parsererror'),
         paths: [...doc.querySelectorAll('path.flowchart-link')].map(path => path.getAttribute('d')),
         marker: [...doc.querySelectorAll('marker[id$="pointEnd"]')].some(m =>
-          m.getAttribute('markerWidth') === '12' && m.getAttribute('viewBox') === '0 0 10 10'),
+          m.getAttribute('markerWidth') === '8' && m.getAttribute('refX') === '10' && m.getAttribute('viewBox') === '0 0 10 10'),
       };
     }, svg);
     expect(result.valid, direction).toBe(true);
     expect(result.paths).toHaveLength(3);
     expect(result.paths.every(d => d?.startsWith('M') && !/NaN|undefined/.test(d))).toBe(true);
     expect(result.marker, direction).toBe(true);
+  }
+});
+
+test('rounded forward and return connectors dock at side centers in every direction', async ({ page }) => {
+  await setup(page);
+  for (const direction of ['TD', 'TB', 'BT', 'LR', 'RL']) {
+    const svg = await renderStyled(page,
+      `flowchart ${direction}\n  A[Start rectangle] --> B{Decision}\n  B --> C[Finish rectangle]\n  C --> A`);
+    const measurements = await page.evaluate(([svgText, dir]) => {
+      document.body.innerHTML = `<div class="mermaid">${svgText}</div>`;
+      const vertical = /^(TD|TB|BT)$/.test(dir);
+      const axis = vertical ? 'y' : 'x';
+      const cross = vertical ? 'x' : 'y';
+      const getBox = element => {
+        const { left, right, top, bottom } = element.getBoundingClientRect();
+        return { x: { min: left, max: right, center: (left + right) / 2 },
+          y: { min: top, max: bottom, center: (top + bottom) / 2 } };
+      };
+      const nodes = new Map([...document.querySelectorAll('g.node[data-mpe-key]')].map(node => [
+        node.dataset.mpeKey, { box: getBox(node.querySelector('rect, polygon')), node },
+      ]));
+      return [...document.querySelectorAll('path.flowchart-link[data-mpe-from][data-mpe-to]')].map(path => {
+        const from = nodes.get(path.dataset.mpeFrom);
+        const to = nodes.get(path.dataset.mpeTo);
+        const start = path.getPointAtLength(0);
+        const end = path.getPointAtLength(path.getTotalLength());
+        const matrix = path.getScreenCTM();
+        const startScreen = new DOMPoint(start.x, start.y).matrixTransform(matrix);
+        const endScreen = new DOMPoint(end.x, end.y).matrixTransform(matrix);
+        const total = path.getTotalLength();
+        const startNext = path.getPointAtLength(Math.min(total, 0.5));
+        const endPrevious = path.getPointAtLength(Math.max(0, total - 0.5));
+        const startNextScreen = new DOMPoint(startNext.x, startNext.y).matrixTransform(matrix);
+        const endPreviousScreen = new DOMPoint(endPrevious.x, endPrevious.y).matrixTransform(matrix);
+        const travel = Math.sign(to.box[axis].center - from.box[axis].center);
+        const forward = path.dataset.mpeForward === 'true';
+        const normal = forward ? axis : cross;
+        const crossAxis = forward ? cross : axis;
+        const tangentCross = normal === axis ? cross : axis;
+        const side = forward
+          ? { from: travel > 0 ? from.box[axis].max : from.box[axis].min,
+              to: travel > 0 ? to.box[axis].min : to.box[axis].max }
+          : null;
+        const fromOuter = !forward && Math.abs(startScreen[cross] - from.box[cross].min) < Math.abs(startScreen[cross] - from.box[cross].max) ? 'min' : 'max';
+        const toOuter = !forward && Math.abs(endScreen[cross] - to.box[cross].min) < Math.abs(endScreen[cross] - to.box[cross].max) ? 'min' : 'max';
+        return {
+          from: path.dataset.mpeFrom,
+          to: path.dataset.mpeTo,
+          fromCrossError: Math.abs(startScreen[crossAxis] - from.box[crossAxis].center),
+          toCrossError: Math.abs(endScreen[crossAxis] - to.box[crossAxis].center),
+          fromSideError: Math.abs(startScreen[normal] - (forward ? side.from : from.box[cross][fromOuter])),
+          toSideError: Math.abs(endScreen[normal] - (forward ? side.to : to.box[cross][toOuter])),
+          sourceNormalTangent: Math.abs(startNextScreen[normal] - startScreen[normal]) /
+            Math.max(0.001, Math.abs(startNextScreen[tangentCross] - startScreen[tangentCross])),
+          targetNormalTangent: Math.abs(endScreen[normal] - endPreviousScreen[normal]) /
+            Math.max(0.001, Math.abs(endScreen[tangentCross] - endPreviousScreen[tangentCross])),
+          fromOuter, toOuter,
+          corners: (path.getAttribute('d').match(/Q/g) || []).length,
+          forward,
+        };
+      });
+    }, [svg, direction]);
+
+    expect(measurements, direction).toHaveLength(3);
+    expect(measurements.filter(edge => edge.forward), direction).toHaveLength(2);
+    expect(measurements.filter(edge => !edge.forward), direction).toHaveLength(1);
+    for (const edge of measurements) {
+      const details = `${direction} ${JSON.stringify(edge)}`;
+      expect(edge.fromCrossError, `${details} source center`).toBeLessThanOrEqual(2);
+      expect(edge.toCrossError, `${details} target center`).toBeLessThanOrEqual(2);
+      expect(edge.fromSideError, `${details} source side`).toBeLessThanOrEqual(2);
+      expect(edge.toSideError, `${details} target side`).toBeLessThanOrEqual(2);
+      expect(edge.sourceNormalTangent, `${details} source tangent`).toBeGreaterThan(1);
+      expect(edge.targetNormalTangent, `${details} target tangent`).toBeGreaterThan(1);
+      if (!edge.forward) expect(edge.fromOuter, `${details} return source side`).toBe(edge.toOuter);
+      expect(edge.corners, `${direction} corner count`).toBeLessThanOrEqual(2);
+    }
+  }
+});
+
+test('centered attachments support circular nodes and nested subgraph transforms', async ({ page }) => {
+  await setup(page);
+  const cases = [
+    ['flowchart LR\n  A((Start)) --> B[Middle] --> C((Finish))', 'LR'],
+    ['flowchart TB\n  subgraph Inner\n    A[First] --> B{Decision}\n  end\n  B --> C((Finish))', 'TB'],
+  ];
+  for (const [source, direction] of cases) {
+    const svg = await renderStyled(page, source);
+    const result = await page.evaluate(([svgText, dir]) => {
+      document.body.innerHTML = `<div class="mermaid">${svgText}</div>`;
+      const vertical = /^(TD|TB|BT)$/.test(dir);
+      const axis = vertical ? 'y' : 'x';
+      const cross = vertical ? 'x' : 'y';
+      const nodes = new Map([...document.querySelectorAll('g.node[data-mpe-key]')].map(node => {
+        const shape = node.querySelector('rect, polygon, circle, ellipse');
+        const rect = shape.getBoundingClientRect();
+        return [node.dataset.mpeKey, { center: { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2 },
+          min: { x: rect.left, y: rect.top }, max: { x: rect.right, y: rect.bottom }, shapeTag: shape.tagName }];
+      }));
+      return [...document.querySelectorAll('path.flowchart-link[data-mpe-from][data-mpe-to]')].map(path => {
+        const from = nodes.get(path.dataset.mpeFrom), to = nodes.get(path.dataset.mpeTo);
+        if (!from || !to) return null;
+        const matrix = path.getScreenCTM();
+        const start = path.getPointAtLength(0), end = path.getPointAtLength(path.getTotalLength());
+        const a = new DOMPoint(start.x, start.y).matrixTransform(matrix);
+        const b = new DOMPoint(end.x, end.y).matrixTransform(matrix);
+        const sign = Math.sign(to.center[axis] - from.center[axis]);
+        return { from: path.dataset.mpeFrom, to: path.dataset.mpeTo,
+          crossFrom: Math.abs(a[cross] - from.center[cross]), crossTo: Math.abs(b[cross] - to.center[cross]),
+          sideFrom: Math.abs(a[axis] - (sign > 0 ? from.max[axis] : from.min[axis])),
+          sideTo: Math.abs(b[axis] - (sign > 0 ? to.min[axis] : to.max[axis])),
+          shapeTags: [from.shapeTag, to.shapeTag] };
+      }).filter(Boolean);
+    }, [svg, direction]);
+    expect(result.length, source).toBeGreaterThan(0);
+    for (const edge of result) {
+      const details = `${direction} ${JSON.stringify(edge)}`;
+      expect(edge.crossFrom, `${details} source center`).toBeLessThanOrEqual(2);
+      expect(edge.crossTo, `${details} target center`).toBeLessThanOrEqual(2);
+      expect(edge.sideFrom, `${details} source boundary`).toBeLessThanOrEqual(2);
+      expect(edge.sideTo, `${details} target boundary`).toBeLessThanOrEqual(2);
+    }
   }
 });
 
