@@ -39,6 +39,9 @@
   --mpe-highlight: #397ab5;
 }
 .mermaid:has(svg.mfe-enhanced) svg { display: block; max-width: 100%; height: auto; margin: 0; }
+/* Obsidian inverts its regular Mermaid SVGs in dark mode. Our SVG already
+ * uses theme colors, so applying that filter would invert them twice. */
+.mermaid:has(svg.mfe-enhanced) svg.mfe-enhanced { filter: none !important; }
 /* Keep font metrics established by the renderer to avoid clipped labels. */
 .mermaid:has(svg.mfe-enhanced) .node :is(rect, circle, ellipse, polygon, path),
 .mermaid:has(svg.mfe-enhanced) :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
