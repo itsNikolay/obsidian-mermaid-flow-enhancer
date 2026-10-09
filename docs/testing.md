@@ -31,6 +31,6 @@ Create a Git tag whose name exactly matches `manifest.json`'s `version` value, w
 
 ## Initial desktop beta evidence
 
-On 2026-10-09, Node.js 22.16.0 passed 17 unit tests, 9 Chromium integration tests, and the esbuild build. GitHub Actions also passed for revision `6b025ac`. The integration suite exercises the actual Mermaid SVG, all supported flowchart directions, Unicode/underscore IDs, cycles, a subgraph with converging branches, unequal sibling boundaries, hover timers, opt-out geometry preservation, print, and reduced motion.
+On 2026-10-09, Node.js 22.16.0 passed 17 unit tests, 10 Chromium integration tests, and the esbuild build. GitHub Actions also passed for revision `6b025ac`. The integration suite exercises the actual Mermaid SVG, all supported flowchart directions, Unicode/underscore IDs, cycles, a subgraph with converging branches, unequal sibling boundaries, hover timers, opt-out geometry preservation, print, reduced motion, and computed text/connector contrast in both themes.
 
 The plugin was enabled in a clean Obsidian 1.14.2 vault on macOS. Its settings and enable/disable behavior worked; enhanced SVG rendering and light/dark screenshots were confirmed. This is desktop evidence only. Mobile devices, third-party plugin combinations, complex nested subgraphs, external beta feedback, and full upgrade/rollback testing remain open. Browser-stand timings for synthetic 100/300-node graphs are in [the performance report](assets/browser-preview-performance.md); they are not Obsidian timing measurements.
