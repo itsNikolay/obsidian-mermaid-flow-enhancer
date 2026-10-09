@@ -79,7 +79,7 @@ async function renderStyled(page, source) {
 test('real Mermaid output keeps Unicode underscore IDs, arrows, labels, and branches', async ({ page }) => {
   await setup(page);
   const svg = await renderStyled(page,
-    'flowchart TD\n  старт_1{Проверить длинное условие?}\n  путь_да[Очень длинная последовательность действий]\n  путь_нет[Отказ]\n  старт_1 -->|да| путь_да\n  старт_1 -->|нет| путь_нет');
+    'flowchart TD\n  \u0441\u0442\u0430\u0440\u0442_1{Check a lengthy condition?}\n  \u043f\u0443\u0442\u044c_\u0434\u0430[A very long sequence of actions]\n  \u043f\u0443\u0442\u044c_\u043d\u0435\u0442[Decline]\n  \u0441\u0442\u0430\u0440\u0442_1 -->|Yes| \u043f\u0443\u0442\u044c_\u0434\u0430\n  \u0441\u0442\u0430\u0440\u0442_1 -->|No| \u043f\u0443\u0442\u044c_\u043d\u0435\u0442');
   const info = await page.evaluate(svgText => {
     const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
     return {
@@ -92,9 +92,9 @@ test('real Mermaid output keeps Unicode underscore IDs, arrows, labels, and bran
     };
   }, svg);
   expect(info.parserError).toBe(false);
-  expect(info.keys).toEqual(expect.arrayContaining(['старт_1', 'путь_да', 'путь_нет']));
+  expect(info.keys).toEqual(expect.arrayContaining(['\u0441\u0442\u0430\u0440\u0442_1', '\u043f\u0443\u0442\u044c_\u0434\u0430', '\u043f\u0443\u0442\u044c_\u043d\u0435\u0442']));
   expect(info.edges).toHaveLength(2);
-  expect(info.edges.every(edge => edge[0] === 'старт_1' && edge[2] === 'true')).toBe(true);
+  expect(info.edges.every(edge => edge[0] === '\u0441\u0442\u0430\u0440\u0442_1' && edge[2] === 'true')).toBe(true);
   expect(info.endMarkers.some(([, units]) => units === 'userSpaceOnUse')).toBe(true);
   expect(info.labels).toBeGreaterThan(0);
   expect(info.paths.every(d => /Q/.test(d))).toBe(true);

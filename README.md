@@ -2,7 +2,7 @@
 
 An **Obsidian Mermaid plugin** for readable Markdown flowcharts: compact diagram layouts, aligned decision branches, rounded orthogonal connectors, light and dark theme styling, and ancestor-path highlighting when you hover or focus any node or edge.
 
-[![Добавить в Obsidian — install Mermaid Flow Enhancer](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
+[![Add to Obsidian — install Mermaid Flow Enhancer](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
 
 The button opens the official plugin installation page. Choose **Add to Obsidian**, then **Install** and **Enable** in the app.
 
@@ -27,8 +27,6 @@ Supplemental 0.1.0 [browser previews](docs/assets/path-highlight.gif) show the s
 ## Mermaid flowcharts in Obsidian
 
 Use Mermaid Flow Enhancer for **Obsidian flowchart styling**, **compact Mermaid diagrams**, **aligned decision branches**, **rounded orthogonal arrows**, and **interactive path highlighting** in Markdown notes. It helps you follow process diagrams and retry flows while keeping Mermaid source editable.
-
-**По-русски:** плагин Mermaid для Obsidian — компактные блок-схемы, выравнивание веток «да/нет», аккуратные стрелки, подсветка пути при наведении, оформление диаграмм для светлой и тёмной темы.
 
 ## Features
 
@@ -56,7 +54,7 @@ The plugin runs locally without telemetry or network requests. No additional ser
 
 ### From the community directory
 
-[![Добавить в Obsidian — open the plugin installation page](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
+[![Add to Obsidian — open the plugin installation page](docs/assets/add-to-obsidian.svg)](https://community.obsidian.md/plugins/mermaid-flow-enhancer)
 
 Open the [Mermaid Flow Enhancer listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) and choose **Add to Obsidian**, then install and enable the plugin. If your app does not find the newly published listing yet, use the release installation below.
 

@@ -9,3 +9,7 @@ Run future Obsidian checks and demonstration recordings in the project's Docker 
 ## Code quality
 
 Run `npm run check` before publishing changes. It includes ESLint, Stylelint, actionlint, ShellCheck, strict TypeScript checking, tests, and the build. Keep generated output excluded and supply fixed filenames to Stylelint; see [linting](docs/linting.md).
+
+## Project language
+
+Keep all user-facing text, documentation, examples, comments, and contributor instructions in English. Unicode regression fixtures may use escaped non-ASCII identifiers to preserve international text coverage.
