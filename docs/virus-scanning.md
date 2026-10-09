@@ -33,9 +33,9 @@ A “no-detections” result is a scan result, not proof that software is safe. 
 
 ## Current status
 
-The repository secret is configured. The [1.0.0 release workflow](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37971215293) completed successfully on 2026-10-09. The downloaded release files match the local tested build and the report hashes byte-for-byte. Completed engine verdicts: `main.js` 0/59 detections, `manifest.json` 0/60, `styles.css` 0/61. Two JavaScript engines failed, one manifest engine timed out, and 14 engines per file did not support the format; those results are excluded from completed-verdict counts and preserved in the [JSON report](security/virustotal-1.0.0.json).
+The [1.0.1 release workflow](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37974552685) completed successfully on 2026-10-09. All three downloaded release files match the tested build and report hashes byte-for-byte. Completed engine verdicts: `main.js` 0/56 detections, `manifest.json` 0/46, `styles.css` 0/47. Timeouts were 5, 15, and 7 respectively; seven CSS engines failed, and 14 engines per file did not support the format. These results are excluded from completed-verdict counts and preserved in the [JSON report](security/virustotal-1.0.1.json).
 
-Read the [Markdown report](security/virustotal-1.0.0.md); both formats are attached to the [1.0.0 release](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/releases/tag/1.0.0). All 48 tests passed, and GitHub artifact attestations for JavaScript and CSS were independently verified. The [0.1.2 scan](security/virustotal-0.1.2.md) remains available as historical evidence.
+The [Markdown report](security/virustotal-1.0.1.md) is included in release notes. Full reports are retained in CI artifacts and this repository, while the release contains only the three supported plugin files. All 52 tests passed. Previous reports remain historical evidence.
 
 ## API references
 
