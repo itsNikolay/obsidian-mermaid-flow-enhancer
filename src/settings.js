@@ -1,6 +1,7 @@
 const { PluginSettingTab, Setting } = require('obsidian');
 const DEFAULT_SETTINGS = Object.freeze({ compactLayout: true, pathHighlight: true, animationDuration: 450, hoverDelay: 180 });
 function normalizeSettings(value = {}) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) value = {};
   const finite = (key, min, max) => typeof value[key] === 'number' && Number.isFinite(value[key])
     ? Math.min(max, Math.max(min, Math.round(value[key]))) : DEFAULT_SETTINGS[key];
   return { compactLayout: typeof value.compactLayout === 'boolean' ? value.compactLayout : true,
