@@ -1,10 +1,18 @@
+const edgeIndexes = new WeakMap();
 function resolveEdge(doc, path) {
+  let index = edgeIndexes.get(doc);
+  if (!index) {
+    index = new Map();
+    const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/^flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
+    for (const from of keys) for (const to of keys) {
+      const prefix = `L_${from}_${to}_`;
+      index.set(prefix, index.has(prefix) ? null : [null, from, to]);
+    }
+    edgeIndexes.set(doc, index);
+  }
   const id = path.getAttribute("data-id") || path.id;
-  const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/^flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
-  const pairs = [];
-  for (const from of keys) for (const to of keys) if (id.startsWith(`L_${from}_${to}_`)) pairs.push([null, from, to]);
-  // Ambiguous concatenations cannot be safely inferred from an SVG id.
-  return pairs.length === 1 ? pairs[0] : null;
+  // Mermaid ends edge ids with an edge number; remove only that final suffix.
+  return index.get(id.replace(/[^_]*$/, "")) || null;
 }
 
 function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel) {
@@ -84,13 +92,11 @@ function styleSvg(svg, direction, settings = {}) {
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
     return { node, key, center: t ? [Number(t[1]), Number(t[2])] : null };
   }).filter(n => n.key && n.center);
+  const layoutByKey = new Map(layoutNodes.map(n => [n.key, n]));
   const layoutEdges = [...doc.querySelectorAll("path.flowchart-link, .edgePath path.path")].map(path => {
-    const id = path.getAttribute("data-id") || path.id;
-    for (const from of layoutNodes) {
-      const to = layoutNodes.find(n => id.startsWith(`L_${from.key}_${n.key}_`));
-      if (to) return { from, to };
-    }
-  }).filter(Boolean);
+    const edge = resolveEdge(doc, path);
+    if (edge) return { from: layoutByKey.get(edge[1]), to: layoutByKey.get(edge[2]) };
+  }).filter(e => e?.from && e?.to);
   const compactNodes = new Map();
   for (const node of doc.querySelectorAll("g.node")) {
     const key = node.id.match(/^flowchart-(.+)-\d+$/)?.[1];
@@ -211,18 +217,15 @@ function styleSvg(svg, direction, settings = {}) {
   const hierarchyNodes = [...doc.querySelectorAll("g.node[data-mpe-key]")];
   const axis = /^(TD|TB|BT)$/.test(direction) ? 2 : 1;
   const position = node => Number((node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/)?.[axis]);
+  const hierarchyByKey = new Map(hierarchyNodes.map(n => [n.getAttribute("data-mpe-key"), n]));
   for (const path of doc.querySelectorAll("path.flowchart-link, .edgePath path.path")) {
-    const id = path.getAttribute("data-id") || path.id;
-    for (const from of hierarchyNodes) {
-      const prefix = `L_${from.getAttribute("data-mpe-key")}_`;
-      if (!id.startsWith(prefix)) continue;
-      const to = hierarchyNodes.find(n => id.startsWith(`${prefix}${n.getAttribute("data-mpe-key")}_`));
-      if (!to || !direction) continue;
-      path.setAttribute("data-mpe-from", from.getAttribute("data-mpe-key"));
-      path.setAttribute("data-mpe-to", to.getAttribute("data-mpe-key"));
-      path.setAttribute("data-mpe-forward", String(sign * (position(to) - position(from)) > 0));
-      break;
-    }
+    const edge = resolveEdge(doc, path);
+    if (!edge || !direction) continue;
+    const from = hierarchyByKey.get(edge[1]), to = hierarchyByKey.get(edge[2]);
+    if (!from || !to) continue;
+    path.setAttribute("data-mpe-from", edge[1]);
+    path.setAttribute("data-mpe-to", edge[2]);
+    path.setAttribute("data-mpe-forward", String(sign * (position(to) - position(from)) > 0));
   }
   // Broad filled triangles, independent of connector stroke width.
   for (const marker of doc.querySelectorAll('marker[id$="pointEnd"], marker[id$="pointStart"]')) {

@@ -1,9 +1,13 @@
 function ancestorPath(edges, target) {
   const nodes = new Set([target]), selected = new Set(), pending = [target];
+  const incoming = new Map();
+  for (const edge of edges) {
+    if (!incoming.has(edge.to)) incoming.set(edge.to, []);
+    incoming.get(edge.to).push(edge);
+  }
   while (pending.length) {
     const key = pending.pop();
-    for (const edge of edges) {
-      if (edge.to !== key) continue;
+    for (const edge of incoming.get(key) || []) {
       selected.add(edge.id);
       if (!nodes.has(edge.from)) { nodes.add(edge.from); pending.push(edge.from); }
     }
