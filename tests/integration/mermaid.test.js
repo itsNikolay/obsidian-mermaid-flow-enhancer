@@ -360,3 +360,42 @@ test('light and dark themes keep node text and connectors readable with matching
     expect(contrastRatio(colors.text, colors.nodeBackground), `${theme} text/background contrast`).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+test('dark theme filter is disabled only for enhanced SVGs', async ({ page }) => {
+  await setup(page);
+  const css = fs.readFileSync(path.resolve(__dirname, '../../styles.css'), 'utf8');
+  await page.addStyleTag({ content: css });
+  await page.addStyleTag({ content: '.theme-dark .mermaid svg { filter: invert(1) hue-rotate(180deg) saturate(1.25); }' });
+  const diagrams = await page.evaluate(async () => {
+    const enhancedSource = 'flowchart TD\n  A[Enhanced] --> B{Processed}';
+    const regularSource = 'flowchart TD\n  A[Regular] --> B{Unprocessed}';
+    const optOutSource = 'flowchart TD\n  %% mfe:off\n  A[Opt out] --> B{Unprocessed}';
+    const [enhanced, regular, optOut] = await Promise.all([
+      mermaid.render('dark-enhanced', enhancedSource),
+      mermaid.render('dark-regular', regularSource),
+      mermaid.render('dark-opt-out', optOutSource),
+    ]);
+    return {
+      enhanced: MPELayout.styleSvg(enhanced.svg, 'TD'),
+      regular: regular.svg,
+      optOut: optOut.svg,
+    };
+  });
+  await page.evaluate(diagrams => {
+    document.body.className = 'theme-dark';
+    document.body.innerHTML = Object.entries(diagrams)
+      .map(([key, svg]) => `<div class="mermaid" id="${key}">${svg}</div>`).join('');
+  }, diagrams);
+
+  const filters = await page.evaluate(() => Object.fromEntries(['enhanced', 'regular', 'optOut'].map(key => {
+    const svg = document.querySelector(`#${key} svg`);
+    return [key, { filter: getComputedStyle(svg).filter, enhanced: svg.classList.contains('mfe-enhanced') }];
+  })));
+  expect(filters.enhanced.enhanced).toBe(true);
+  expect(filters.enhanced.filter).toBe('none');
+  for (const key of ['regular', 'optOut']) {
+    expect(filters[key].enhanced).toBe(false);
+    expect(filters[key].filter).toContain('invert(1)');
+    expect(filters[key].filter).toContain('hue-rotate(180deg)');
+  }
+});
