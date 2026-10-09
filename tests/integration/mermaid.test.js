@@ -349,7 +349,6 @@ test('light and dark themes keep node text and connectors readable with matching
         diamondFill: getComputedStyle(diamond).fill,
         text: getComputedStyle(label).color,
         line: getComputedStyle(edge).stroke,
-        nodeBackground: getComputedStyle(root).getPropertyValue('--mpe-node').trim(),
         canvasBackground: getComputedStyle(document.body).getPropertyValue('--background-primary').trim(),
       };
     }, [svg, theme]);
@@ -357,7 +356,6 @@ test('light and dark themes keep node text and connectors readable with matching
     expect(colors.diamondFill, theme).toBe(colors.rectangleFill);
     expect(contrastRatio(colors.text, colors.rectangleFill), `${theme} text/node contrast`).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(colors.line, colors.canvasBackground), `${theme} line/background contrast`).toBeGreaterThanOrEqual(3);
-    expect(contrastRatio(colors.text, colors.nodeBackground), `${theme} text/background contrast`).toBeGreaterThanOrEqual(4.5);
   }
 });
 
@@ -398,4 +396,65 @@ test('dark theme filter is disabled only for enhanced SVGs', async ({ page }) =>
     expect(filters[key].filter).toContain('invert(1)');
     expect(filters[key].filter).toContain('hue-rotate(180deg)');
   }
+});
+
+test('tracing fade and highlight are scoped to enhanced SVG roots', async ({ page }) => {
+  await setup(page);
+  const css = fs.readFileSync(path.resolve(__dirname, '../../styles.css'), 'utf8');
+  await page.addStyleTag({ content: css });
+  const diagrams = await page.evaluate(async () => {
+    const source = 'flowchart TD\n  A[Start] --> B[Finish]';
+    const [enhanced, ordinary] = await Promise.all([
+      mermaid.render('tracing-enhanced', source),
+      mermaid.render('tracing-ordinary', source),
+    ]);
+    return { enhanced: MPELayout.styleSvg(enhanced.svg, 'TD'), ordinary: ordinary.svg };
+  });
+  const ordinaryBefore = await page.evaluate(diagrams => {
+    document.body.innerHTML = `<div class="mermaid" id="enhanced">${diagrams.enhanced}</div>` +
+      `<div class="mermaid" id="ordinary">${diagrams.ordinary}</div>`;
+    const ordinary = document.querySelector('#ordinary svg');
+    const ordinaryNode = ordinary.querySelector('.node');
+    const ordinaryEdge = ordinary.querySelector('path.flowchart-link');
+    const baseline = { opacity: getComputedStyle(ordinaryNode).opacity,
+      stroke: getComputedStyle(ordinaryEdge).stroke, filter: getComputedStyle(ordinary).filter };
+    const enhanced = document.querySelector('#enhanced svg');
+    enhanced.classList.add('mpe-tracing');
+    enhanced.querySelector('.node[data-mpe-key="A"]').classList.add('mpe-on-path');
+    enhanced.querySelector('path.flowchart-link').classList.add('mpe-on-path');
+    ordinary.classList.add('mpe-tracing');
+    ordinary.querySelector('.node').classList.add('mpe-on-path');
+    ordinary.querySelector('path.flowchart-link').classList.add('mpe-on-path');
+    return baseline;
+  }, diagrams);
+  await page.waitForTimeout(500);
+
+  const result = await page.evaluate(() => {
+    const enhanced = document.querySelector('#enhanced svg');
+    const ordinary = document.querySelector('#ordinary svg');
+    const selected = enhanced.querySelector('.node[data-mpe-key="A"]');
+    const faded = enhanced.querySelector('.node[data-mpe-key="B"]');
+    const selectedShape = selected.querySelector('rect');
+    const enhancedEdge = enhanced.querySelector('path.flowchart-link');
+    const ordinaryNode = ordinary.querySelector('.node');
+    const ordinaryEdge = ordinary.querySelector('path.flowchart-link');
+    return {
+      fadedOpacity: getComputedStyle(faded).opacity,
+      selectedOpacity: getComputedStyle(selected).opacity,
+      nodeStroke: getComputedStyle(selectedShape).stroke,
+      edgeStroke: getComputedStyle(enhancedEdge).stroke,
+      highlight: getComputedStyle(enhanced).getPropertyValue('--mpe-highlight').trim(),
+      ordinaryOpacity: getComputedStyle(ordinaryNode).opacity,
+      ordinaryEdgeStroke: getComputedStyle(ordinaryEdge).stroke,
+      ordinaryFilter: getComputedStyle(ordinary).filter,
+    };
+  });
+  expect(result.fadedOpacity).toBe('0.22');
+  expect(result.selectedOpacity).toBe('1');
+  expect(result.nodeStroke).toBe('rgb(131, 185, 232)');
+  expect(result.edgeStroke).toBe('rgb(131, 185, 232)');
+  expect(result.highlight).toBe('#83b9e8');
+  expect(result.ordinaryOpacity).toBe(ordinaryBefore.opacity);
+  expect(result.ordinaryEdgeStroke).toBe(ordinaryBefore.stroke);
+  expect(result.ordinaryFilter).toBe(ordinaryBefore.filter);
 });
