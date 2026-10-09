@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Use Node.js 22.12 or later and npm. Install the exact dependency versions from the lockfile:
+Use Node.js 22.13 or later and npm. Install the exact dependency versions from the lockfile:
 
 ```sh
 npm ci
@@ -11,6 +11,7 @@ npm ci
 ## Checks
 
 ```sh
+npm run lint
 npm test
 npx playwright install --with-deps chromium
 npm run test:integration
@@ -19,7 +20,9 @@ npm run build
 
 `npm test` runs the Node test runner against `tests/unit/*.test.js`. The browser suite is run by Playwright and exercises the plugin's Mermaid output in Chromium. `npm run build` creates the distributable `main.js` at the project root. Keep generated output out of version control unless the release process explicitly attaches it.
 
-Continuous integration runs the same install, test, browser setup, integration test, and build steps on pushes and pull requests. If a browser test fails locally, inspect `playwright-report/` and `test-results/` before changing expected output.
+See [code linting](linting.md) for individual linters and automatic fixes. `npm run check` runs all linters, tests, and the build.
+
+Continuous integration runs the same install, lint, test, browser setup, integration test, and build steps on pushes and pull requests. If a browser test fails locally, inspect `playwright-report/` and `test-results/` before changing expected output.
 
 ## Manual Obsidian check
 

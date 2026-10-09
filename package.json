@@ -6,18 +6,29 @@
     "build": "node esbuild.config.mjs",
     "test": "node --test tests/unit/*.test.js",
     "test:integration": "playwright test",
-    "check": "npm test && npm run test:integration && npm run build",
+    "check": "npm run lint && npm test && npm run test:integration && npm run build",
     "docker:check": "node scripts/run-docker.mjs check",
     "docker:record": "node scripts/run-docker.mjs record",
-    "scan:virustotal": "node scripts/scan-virustotal.mjs"
+    "scan:virustotal": "node scripts/scan-virustotal.mjs",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:workflows && npm run lint:shell",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint styles.css docs/demo/demo.css",
+    "lint:workflows": "node scripts/lint-tools.mjs workflows",
+    "lint:shell": "node scripts/lint-tools.mjs shell",
+    "lint:fix": "eslint . --fix && stylelint styles.css docs/demo/demo.css --fix"
   },
   "devDependencies": {
-    "esbuild": "0.25.12",
-    "obsidian": "1.14.4",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.0",
-    "mermaid": "12.1.0"
+    "esbuild": "0.25.12",
+    "eslint": "10.12.0",
+    "globals": "17.13.0",
+    "mermaid": "12.1.0",
+    "obsidian": "1.14.4",
+    "stylelint": "17.16.0",
+    "stylelint-config-standard": "40.0.0"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.0"
   }
 }

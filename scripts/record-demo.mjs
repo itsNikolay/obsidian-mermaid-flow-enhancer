@@ -1,6 +1,5 @@
 import { createRequire } from "node:module";
 import { readFile, mkdir, stat, unlink, writeFile, readdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -107,7 +106,7 @@ await run("ffmpeg", ["-y", "-loop", "1", "-t", "1.1", "-i", join(out, "compact-o
 await focused.close(); await browser.close();
 if (browserErrors.length) throw new Error(`Browser errors: ${browserErrors.join("; ")}`);
 for (const name of ["theme-dark.png", "theme-light.png", "compact-on.png", "compact-off.png"]) {
-  try { await unlink(join(out, name)); } catch {}
+  try { await unlink(join(out, name)); } catch { /* Temporary frame may already have been removed. */ }
 }
 
 for (const name of ["path-highlight.gif", "themes.gif", "compact-layout.gif", "browser-preview.mp4"]) {

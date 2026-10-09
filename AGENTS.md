@@ -5,3 +5,7 @@ Work directly in the main repository; do not use git worktrees. Give parallel ag
 ## Obsidian verification and recording
 
 Run future Obsidian checks and demonstration recordings in the project's Docker environment, using the Linux Obsidian application on its isolated virtual display. Do not launch or control Obsidian on the user's desktop for these tasks. Use only the synthetic demo vault created inside the container; never mount a personal vault, host Obsidian configuration, or credentials. Export screenshots, videos, and check results to `artifacts/docker/`. See [the Docker workflow](docs/docker-testing.md). Browser-only tests remain useful, but do not describe them as checks in Obsidian.
+
+## Code quality
+
+Run `npm run check` before publishing changes. It includes ESLint, Stylelint, actionlint, ShellCheck, tests, and the build. Keep generated output excluded and supply fixed filenames to Stylelint; see [linting](docs/linting.md).

@@ -370,7 +370,7 @@ test('compactLayout false preserves Mermaid geometry, classes, IDs, and link anc
     .toEqual(result.original.edges.map(e => [e.class, e.d, e.markerEnd, e.dataId]));
   expect(result.transformed.nodes.find(n => n.key === 'B').class).toContain('special');
   for (const edge of result.transformed.edges) {
-    const markerId = edge.markerEnd?.match(/#([^)'\"]+)/)?.[1];
+    const markerId = edge.markerEnd?.match(/#([^)'"]+)/)?.[1];
     if (markerId) expect(result.transformed.markers).toContain(markerId);
   }
 });

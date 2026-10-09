@@ -58,7 +58,7 @@ function fakeDocument(theme = 'theme-dark') {
 test('renderer wrapper preserves YAML order, applies diagram defaults, and passes transformed output', async () => {
   const previousDocument = global.document;
   global.document = fakeDocument();
-  let calls = [];
+  const calls = [];
   const original = async function (id, source, ...rest) {
     calls.push({ id, source, rest });
     return { svg: '<svg/>', bindFunctions: 'preserved' };

@@ -127,3 +127,5 @@ Plugin releases do not migrate or rewrite note contents. Plugin preferences are 
 ## License
 
 [MIT](LICENSE). Copyright (c) itsNikolay.
+
+Development checks: see [testing](docs/testing.md) and [code linting](docs/linting.md).

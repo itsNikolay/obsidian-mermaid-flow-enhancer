@@ -40,7 +40,7 @@ function fakeSvg() {
 
 test('path controller transitions between targets and delays clearing after pointer leaves', () => {
   const dom = fakeSvg();
-  let settings = { pathHighlight: true, hoverDelay: 180 };
+  const settings = { pathHighlight: true, hoverDelay: 180 };
   let current = 0;
   const callbacks = new Map();
   const cleared = [];

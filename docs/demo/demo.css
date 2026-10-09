@@ -1,35 +1,234 @@
-* { box-sizing: border-box; }
-:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-body { margin: 0; min-height: 100vh; background: #17191e; color: #e3e6eb; transition: background .2s, color .2s; }
-body.theme-light { color-scheme: light; background: #f2f4f7; color: #242a33; }
-main { max-width: 1200px; margin: auto; padding: 0 40px 30px; }
-.topbar { display:flex; align-items:center; justify-content:space-between; min-height:72px; border-bottom:1px solid #ffffff14; gap:20px; }
-.theme-light .topbar { border-color:#18203316; }
-.brand { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:650; white-space:nowrap; }
-.mark { display:grid; place-items:center; width:28px;height:28px;border-radius:8px;background:#24364b;color:#a9d1fa;font-weight:800; }
-.preview-label { color:#edbd72; border:1px solid #edbd7255; background:#edbd7210; border-radius:5px; padding:6px 9px; font:600 9px ui-monospace,monospace; letter-spacing:.09em; white-space:nowrap; }
-.controls { display:flex; gap:8px; }
-button { color:inherit; background:transparent; border:1px solid #ffffff28; border-radius:6px; padding:7px 10px; font-size:11px; cursor:pointer; }
-.theme-light button { border-color:#19223530; }
-.intro { max-width:710px; padding:42px 0 26px; }
-.eyebrow { color:#82b7eb; font:700 10px ui-monospace,monospace; letter-spacing:.15em; margin-bottom:12px; }
-h1 { font-size:clamp(34px,5vw,52px); line-height:1.04; letter-spacing:-.045em; margin:0 0 14px; font-weight:690; }
-h1 span { color:#9ba7b8; }
-.theme-light h1 span { color:#778396; }
-.intro p { max-width:590px; margin:0; color:#aab2bf; font-size:14px; line-height:1.65; }
-.theme-light .intro p { color:#667184; }
-.canvas-card { border:1px solid #ffffff17; background:#1e2127; border-radius:11px; overflow:hidden; box-shadow:0 22px 70px #0003; }
-.theme-light .canvas-card { background:#fff; border-color:#1d2b401b; box-shadow:0 22px 70px #29405b12; }
-.card-head,.card-foot { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; }
-.card-head { border-bottom:1px solid #ffffff12; }
-.theme-light .card-head,.theme-light .card-foot { border-color:#1d2b4012; }
-.card-head strong { display:block; font-size:12px; }
-.card-head small { display:block; margin-top:4px; color:#858e9d; font-size:10px; }
-.live { color:#95c9a1; font-size:10px; display:flex; gap:6px; align-items:center; }
-.live i { width:6px;height:6px;border-radius:50%;background:#7cc58e;box-shadow:0 0 8px #7cc58e99; }
-.mermaid { min-height:380px; padding:22px 30px 10px; display:flex; justify-content:center; align-items:center; overflow:auto; }
-.mermaid svg { width:100%; max-height:570px; }
-.card-foot { color:#8f99a8; font-size:10px; border-top:1px solid #ffffff12; }
-footer { color:#707987; font-size:10px; padding:14px 2px; }
-@media(max-width:780px) { main{padding:0 18px 24px}.preview-label{display:none}.mermaid{padding:16px 10px}.topbar{min-height:62px} }
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #17191e;
+  color: #e3e6eb;
+  transition: background .2s, color .2s;
+}
+
+body.theme-light {
+  color-scheme: light;
+  background: #f2f4f7;
+  color: #242a33;
+}
+
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 40px 30px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  border-bottom: 1px solid #ffffff14;
+  gap: 20px;
+}
+
+.theme-light .topbar {
+  border-color: #18203316;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #24364b;
+  color: #a9d1fa;
+  font-weight: 800;
+}
+
+.preview-label {
+  color: #edbd72;
+  border: 1px solid #edbd7255;
+  background: #edbd7210;
+  border-radius: 5px;
+  padding: 6px 9px;
+  font: 600 9px ui-monospace,monospace;
+  letter-spacing: .09em;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  color: inherit;
+  background: transparent;
+  border: 1px solid #ffffff28;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.theme-light button {
+  border-color: #19223530;
+}
+
+.intro {
+  max-width: 710px;
+  padding: 42px 0 26px;
+}
+
+.eyebrow {
+  color: #82b7eb;
+  font: 700 10px ui-monospace,monospace;
+  letter-spacing: .15em;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: clamp(34px,5vw,52px);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+  margin: 0 0 14px;
+  font-weight: 690;
+}
+
+h1 span {
+  color: #9ba7b8;
+}
+
+.theme-light h1 span {
+  color: #778396;
+}
+
+.intro p {
+  max-width: 590px;
+  margin: 0;
+  color: #aab2bf;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.theme-light .intro p {
+  color: #667184;
+}
+
+.canvas-card {
+  border: 1px solid #ffffff17;
+  background: #1e2127;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 22px 70px #0003;
+}
+
+.theme-light .canvas-card {
+  background: #fff;
+  border-color: #1d2b401b;
+  box-shadow: 0 22px 70px #29405b12;
+}
+
+.card-head,.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.card-head {
+  border-bottom: 1px solid #ffffff12;
+}
+
+.card-head strong {
+  display: block;
+  font-size: 12px;
+}
+
+.card-head small {
+  display: block;
+  margin-top: 4px;
+  color: #858e9d;
+  font-size: 10px;
+}
+
+.live {
+  color: #95c9a1;
+  font-size: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7cc58e;
+  box-shadow: 0 0 8px #7cc58e99;
+}
+
+.mermaid {
+  min-height: 380px;
+  padding: 22px 30px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+}
+
+.mermaid svg {
+  width: 100%;
+  max-height: 570px;
+}
+
+.card-foot {
+  color: #8f99a8;
+  font-size: 10px;
+  border-top: 1px solid #ffffff12;
+}
+
+.theme-light .card-head,.theme-light .card-foot {
+  border-color: #1d2b4012;
+}
+
+footer {
+  color: #707987;
+  font-size: 10px;
+  padding: 14px 2px;
+}
+
+@media (width <=780px) {
+  main {
+    padding: 0 18px 24px;
+  }
+
+  .preview-label {
+    display: none;
+  }
+
+  .mermaid {
+    padding: 16px 10px;
+  }
+
+  .topbar {
+    min-height: 62px;
+  }
+}
+
 /* Keep the harness theme explicit; the plugin stylesheet remains the source of diagram styling. */

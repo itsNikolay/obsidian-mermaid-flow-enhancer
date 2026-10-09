@@ -17,7 +17,7 @@ await writeFile(`${vault}/.obsidian/app.json`, JSON.stringify({ safeMode: false,
 await writeFile(`${profile}/obsidian.json`, JSON.stringify({ vaults: { demo: { path: vault, ts: Date.now(), open: true } } }));
 await writeFile(`${vault}/Demo.md`, `# Mermaid Flow Enhancer\n\nSynthetic Docker demonstration — no personal notes.\n\n\`\`\`mermaid\nflowchart LR\nrequest[Request] --> triage[Triage]\ntriage --> ready{Ready to build?}\nready -->|No| clarify[Clarify details]\nclarify --> triage\nready -->|Yes| build[Build change]\nbuild --> checks{Checks pass?}\nchecks -->|No| build\nchecks -->|Yes| release[Release]\nrelease --> done((Complete))\n\`\`\`\n`);
 const errors = [];
-let app, browser, page, recorder, recorderDone;
+let app, browser, page, recorder, recorderDone, failure;
 let recorderLog = "";
 try {
   app = spawn(process.env.OBSIDIAN_EXECUTABLE, ['--no-sandbox', '--disable-gpu',
@@ -127,18 +127,20 @@ try {
   console.log('Real Obsidian Docker smoke check passed');
 } catch (error) {
   if (page) await page.screenshot({ path: `${out}/failure.png` }).catch(() => {});
-  throw error;
+  failure = error;
 } finally {
   if (recorder) {
     if (recorder.exitCode === null && !recorder.killed) recorder.stdin.end('q');
     let timer;
     const outcome = await Promise.race([recorderDone, new Promise(resolve => { timer = setTimeout(() => { recorder.kill('SIGKILL'); resolve({ error: new Error('ffmpeg shutdown timed out') }); }, 15000); })]);
     clearTimeout(timer);
-    if (outcome.error || outcome.code !== 0) throw new Error(`ffmpeg recording failed: ${outcome.error || outcome.code}\n${recorderLog}`);
+    if (outcome.error || outcome.code !== 0) failure ??= new Error(`ffmpeg recording failed: ${outcome.error || outcome.code}\n${recorderLog}`);
   }
-  if (browser) await browser.close();
+  if (browser) await browser.close().catch(error => { failure ??= error; });
   if (app && app.exitCode === null) app.kill('SIGTERM');
 }
+
+if (failure) throw failure;
 
 if (record) {
   const result = spawnSync('ffmpeg', ['-y', '-i', `${out}/obsidian-demo.mp4`, '-vf', 'fps=12,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse', '-loop', '0', `${out}/obsidian-demo.gif`], { stdio: 'inherit' });
