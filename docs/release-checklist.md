@@ -1,21 +1,21 @@
 # Beta release checklist
 
-Use this checklist for each candidate release. The project is still in beta: **external user testing, an actual Obsidian recording, mobile verification, and GitHub release authentication are pending**. Do not describe any of these as completed until someone records the evidence.
+Use this checklist for each candidate release. The project is still in beta. External user testing and mobile verification remain requirements for a stable release; they do not claim to be covered by the initial desktop beta. Record evidence for each completed check.
 
 ## Before tagging
 
-- [ ] Run the CI checks in [testing.md](testing.md), including the Chromium integration suite and build.
+- [x] Run the CI checks in [testing.md](testing.md), including the Chromium integration suite and build.
 - [ ] Test the built files in a disposable Obsidian vault. Check the flows in [demo-script.md](demo-script.md), light and dark themes, settings, the `%% mfe:off` directive, and reload/unload behavior.
-- [ ] Record the Obsidian version and desktop platform used for manual verification.
+- [x] Record the Obsidian version and desktop platform used for manual verification: Obsidian 1.14.2 on macOS, disposable demo vault. Settings, enable/disable, enhanced rendering, and both themes checked.
 - [ ] Verify behavior on a mobile device. The manifest does not mark the plugin desktop-only, but mobile behavior is not yet verified.
 - [ ] Obtain external beta feedback and record issues or findings. External user testing is currently pending.
 - [ ] Record a short demo in actual Obsidian and review it for accidental exposure of private vault content. The recording is currently pending; do not use a mockup as evidence of an actual Obsidian run.
-- [ ] Confirm `manifest.json`, `versions.json`, and `CHANGELOG.md` agree on the version. Make the release tag exactly match the manifest version and omit a leading `v`.
+- [x] Confirm `manifest.json`, `versions.json`, and `CHANGELOG.md` agree on the version. Make the release tag exactly match the manifest version and omit a leading `v`.
 - [ ] Confirm the repository's GitHub Actions identity has permission to create releases and upload assets. GitHub release authentication and a completed release run are currently pending.
 
 ## Publish
 
-After the checks above have evidence, push the version tag. The release workflow builds the plugin and attaches `main.js`, `manifest.json`, and `styles.css`. Inspect the generated GitHub release and download all three assets to verify that they are present and belong to the same build.
+For an initial beta, complete automated and desktop checks and disclose the remaining device/external checks. Complete the full checklist before a stable release. Push the version tag. The release workflow builds the plugin and attaches `main.js`, `manifest.json`, and `styles.css`. Inspect the generated GitHub release and download all three assets to verify that they are present and belong to the same build.
 
 ## Upgrade and rollback
 

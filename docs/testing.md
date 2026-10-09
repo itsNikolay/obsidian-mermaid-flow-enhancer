@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Use a current Node.js LTS release and npm. Install the exact dependency versions from the lockfile:
+Use Node.js 22.12 or later and npm. Install the exact dependency versions from the lockfile:
 
 ```sh
 npm ci
@@ -27,4 +27,10 @@ For a release candidate, copy `main.js`, `manifest.json`, and `styles.css` into 
 
 ## Release workflow
 
-Create a Git tag whose name exactly matches `manifest.json`'s `version` value, without a leading `v` (for example, `0.1.0-beta.1`). The release workflow builds the plugin and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release. Update `versions.json` and `CHANGELOG.md` before tagging.
+Create a Git tag whose name exactly matches `manifest.json`'s `version` value, without a leading `v` (for example, `0.1.0`). The release workflow builds the plugin and attaches `main.js`, `manifest.json`, and `styles.css` to the GitHub release. Update `versions.json` and `CHANGELOG.md` before tagging.
+
+## Initial desktop beta evidence
+
+On 2026-10-09, Node.js 22.16.0 passed 17 unit tests, 8 Chromium integration tests, and the esbuild build. GitHub Actions also passed for revision `6b025ac`. The integration suite exercises the actual Mermaid SVG, all supported flowchart directions, Unicode/underscore IDs, cycles, unequal sibling boundaries, hover timers, opt-out geometry preservation, print, and reduced motion.
+
+The plugin was enabled in a clean Obsidian 1.14.2 vault on macOS. Its settings and enable/disable behavior worked; enhanced SVG rendering and light/dark screenshots were confirmed. This is desktop evidence only. Mobile devices, third-party plugin combinations, complex nested subgraphs, external beta feedback, and full upgrade/rollback testing remain open. Browser-stand timings for synthetic 100/300-node graphs are in [the performance report](assets/browser-preview-performance.md); they are not Obsidian timing measurements.
