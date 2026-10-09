@@ -1,0 +1,24 @@
+{
+  "obsidian": "1.14.4",
+  "plugin": "0.1.2",
+  "realApp": true,
+  "desktop": "Docker Xvfb",
+  "recording": true,
+  "scenario": "grocery-delivery",
+  "nodes": 17,
+  "geometry": {
+    "endpoints": 44,
+    "maxError": 73.39052301548095
+  },
+  "palettes": [
+    {
+      "theme": "light",
+      "fill": "rgb(255, 255, 255)"
+    },
+    {
+      "theme": "dark",
+      "fill": "rgb(39, 52, 73)"
+    }
+  ],
+  "errors": []
+}

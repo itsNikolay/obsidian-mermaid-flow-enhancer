@@ -14,13 +14,13 @@ The button opens the official plugin installation page. Choose **Add to Obsidian
 
 The screenshots and recordings show plugin 0.1.2 in real Linux Obsidian 1.14.4, running inside Docker with a synthetic vault.
 
-![Refined dark theme and centered connector attachments](docs/assets/obsidian-preview-dark.png)
+![Grocery delivery flowchart with ancestor-path highlighting in Obsidian](docs/assets/grocery-delivery-dark.png)
 
-The GIF and MP4 demonstrate ancestor-path highlighting in both themes. The MP4 records the virtual screen at 30 fps; no host Obsidian window or personal notes were used.
+The demo follows an everyday **grocery delivery order**: missing-item replacements, payment retries, packing, delivery, and notifications. Its single-screen flowchart has 17 nodes, 22 connections, six node shapes, parallel setup branches, two retry loops, and dotted notification links. The GIF and MP4 demonstrate ancestor-path highlighting in both themes. The MP4 records the virtual screen at 30 fps; no host Obsidian window or personal notes were used.
 
-![Ancestor path highlighting in a real Obsidian window](docs/assets/obsidian-path-highlight.gif)
+![Grocery order branches and path highlighting in real Obsidian](docs/assets/grocery-delivery.gif)
 
-[Light screenshot](docs/assets/obsidian-preview-light.png) · [Dark screenshot](docs/assets/obsidian-preview-dark.png) · [Short app video](docs/assets/obsidian-preview.mp4) · [Capture report](docs/assets/obsidian-capture-report.md)
+[Light screenshot](docs/assets/grocery-delivery-light.png) · [Dark screenshot](docs/assets/grocery-delivery-dark.png) · [Grocery delivery video](docs/assets/grocery-delivery.mp4) · [Diagram source](demo-vault/Examples/grocery-delivery.md) · [Capture report](docs/assets/grocery-delivery-capture.md)
 
 Supplemental 0.1.0 [browser previews](docs/assets/path-highlight.gif) show the same plugin layout and interaction using a browser test stand. [Theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Browser video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf). They are test-stand captures, not Obsidian recordings.
 

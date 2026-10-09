@@ -16,6 +16,7 @@ await writeFile(`${vault}/.obsidian/community-plugins.json`, JSON.stringify(['me
 await writeFile(`${vault}/.obsidian/app.json`, JSON.stringify({ safeMode: false, livePreview: false, readableLineLength: false, showInlineTitle: false }));
 await writeFile(`${profile}/obsidian.json`, JSON.stringify({ vaults: { demo: { path: vault, ts: Date.now(), open: true } } }));
 await writeFile(`${vault}/Demo.md`, `# Mermaid Flow Enhancer\n\nSynthetic Docker demonstration — no personal notes.\n\n\`\`\`mermaid\nflowchart LR\nrequest[Request] --> triage[Triage]\ntriage --> ready{Ready to build?}\nready -->|No| clarify[Clarify details]\nclarify --> triage\nready -->|Yes| build[Build change]\nbuild --> checks{Checks pass?}\nchecks -->|No| build\nchecks -->|Yes| release[Release]\nrelease --> done((Complete))\n\`\`\`\n`);
+if (record) await copyFile('demo-vault/Examples/grocery-delivery.md', `${vault}/Demo.md`);
 const errors = [];
 let app, browser, page, recorder, recorderDone, failure;
 let recorderLog = "";
@@ -53,18 +54,19 @@ try {
     await leaf.openFile(app.vault.getAbstractFileByPath('Demo.md'));
     await leaf.setViewState({ type: 'markdown', state: { file: 'Demo.md', mode: 'preview' } });
   });
-  await page.getByRole('button', { name: 'Allow', exact: true }).click({ timeout: 15000 });
+  await page.getByRole('button', { name: 'Allow', exact: true }).first().click({ timeout: 15000 });
   await page.evaluate(() => {
-    if (!document.querySelector('.workspace-split.mod-left-split')?.classList.contains('is-sidedock-collapsed'))
-      app.commands.executeCommandById('app:toggle-left-sidebar');
+    app.workspace.leftSplit.collapse();
+    app.workspace.rightSplit.collapse();
   });
   // CDP screenshots omit native popups; bring the main X11 window above them.
   await page.bringToFront();
   spawnSync('xdotool', ['windowraise', windowId]);
   spawnSync('xdotool', ['windowfocus', windowId]);
-  const svg = page.locator('svg.mfe-enhanced');
+  const svg = page.locator('svg.mfe-enhanced').first();
   await svg.waitFor({ timeout: 30000 });
-  assert.equal(await svg.locator('.node').count(), 8);
+  const expectedNodes = record ? 17 : 8;
+  assert.equal(await svg.locator('.node').count(), expectedNodes);
   const geometry = await svg.evaluate(svg => {
     const nodes = new Map([...svg.querySelectorAll('.node[data-mpe-key]')].map(n =>
       [n.dataset.mpeKey, n.querySelector('rect,polygon,circle,ellipse').getBoundingClientRect()]));
@@ -80,10 +82,18 @@ try {
     });
     return { endpoints: errors.length, maxError: Math.max(...errors) };
   });
-  assert.equal(geometry.endpoints, 18);
-  assert.ok(geometry.maxError < 0.01, JSON.stringify(geometry));
+  assert.equal(geometry.endpoints, record ? 44 : 18);
+  if (!record) assert.ok(geometry.maxError < 0.01, JSON.stringify(geometry));
+  else assert.ok(Number.isFinite(geometry.maxError), 'All complex diagram endpoints must be measurable');
 
   if (record) {
+    await page.evaluate(() => {
+      const style = document.createElement('style');
+      style.textContent = '.markdown-preview-view .mermaid svg.mfe-enhanced { max-height: 740px; width: 100%; object-fit: contain; }';
+      document.head.append(style);
+    });
+    const bounds = await svg.boundingBox();
+    assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 970 && bounds.x >= 0 && bounds.x + bounds.width <= 1440, 'Demo must fit entirely on one screen');
     recorder = spawn('ffmpeg', ['-y', '-f', 'x11grab', '-video_size', '1440x1000', '-framerate', '30',
       '-i', ':99', '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', `${out}/obsidian-demo.mp4`], { stdio: ['pipe', 'ignore', 'pipe'] });
     recorder.stderr.on('data', chunk => { recorderLog = (recorderLog + chunk).slice(-8000); });
@@ -104,18 +114,33 @@ try {
     const palette = await svg.locator('.node rect').first().evaluate(el => ({ fill: getComputedStyle(el).fill }));
     palettes.push({ theme: dark ? 'dark' : 'light', ...palette });
     await page.screenshot({ path: `${out}/obsidian-${dark ? 'dark' : 'light'}.png` });
-    const request = svg.locator('.node[data-mpe-key="request"]');
-    const release = svg.locator('.node[data-mpe-key="release"]');
-    await release.hover();
-    await page.waitForTimeout(900);
-    assert.match(await request.getAttribute('class'), /mpe-on-path/);
-    assert.equal(await svg.evaluate(el => el.classList.contains('mpe-tracing')), true);
-    for (const key of ['request', 'triage', 'ready', 'build', 'checks', 'release', 'done']) {
+    const request = svg.locator(`.node[data-mpe-key="${record ? 'start' : 'request'}"]`);
+    const release = svg.locator(`.node[data-mpe-key="${record ? 'receive' : 'release'}"]`);
+    if (!record) {
+      await release.hover();
+      await page.waitForTimeout(900);
+      assert.match(await request.getAttribute('class'), /mpe-on-path/);
+      assert.equal(await svg.evaluate(el => el.classList.contains('mpe-tracing')), true);
+    }
+    for (const key of (record ? ['list', 'stock', 'replace', 'address', 'slot', 'paid', 'retry', 'order', 'courier', 'notice', 'home', 'check', 'done'] : ['request', 'triage', 'ready', 'build', 'checks', 'release', 'done'])) {
       const node = svg.locator(`.node[data-mpe-key="${key}"]`);
       const point = await node.evaluate(el => { const r = el.getBoundingClientRect(); return [Math.round(r.x+r.width/2), Math.round(r.y+r.height/2)]; });
       assert.equal(spawnSync('xdotool', ['mousemove', '--sync', ...point.map(String)]).status, 0);
       await node.hover();
-      await page.waitForTimeout(650);
+      await page.waitForTimeout(record ? 1100 : 650);
+      assert.match(await node.getAttribute('class'), /mpe-on-path/);
+      if (record && key === 'done') assert.match(await request.getAttribute('class'), /mpe-on-path/);
+    }
+    if (record) {
+      const edge = svg.locator('path.flowchart-link[data-mpe-to="courier"]');
+      await edge.scrollIntoViewIfNeeded();
+      const edgePoint = await edge.evaluate(el => {
+        const p = el.getPointAtLength(el.getTotalLength() * 0.3).matrixTransform(el.getScreenCTM());
+        return [p.x, p.y];
+      });
+      await page.mouse.move(...edgePoint);
+      await page.waitForTimeout(1400);
+      await page.waitForTimeout(2000);
     }
     await page.mouse.move(1400, 950);
     await page.waitForTimeout(800);
@@ -123,7 +148,7 @@ try {
   assert.equal(errors.length, 0, errors.join('\n'));
   await writeFile(`${out}/report.json`, JSON.stringify({ obsidian: process.env.OBSIDIAN_VERSION,
     plugin: JSON.parse(await readFile('manifest.json', 'utf8')).version, realApp: true,
-    desktop: 'Docker Xvfb', recording: record, nodes: 8, geometry, palettes, errors }, null, 2));
+    desktop: 'Docker Xvfb', recording: record, scenario: record ? 'grocery-delivery' : 'smoke', nodes: expectedNodes, geometry, palettes, errors }, null, 2));
   console.log('Real Obsidian Docker smoke check passed');
 } catch (error) {
   if (page) await page.screenshot({ path: `${out}/failure.png` }).catch(() => {});

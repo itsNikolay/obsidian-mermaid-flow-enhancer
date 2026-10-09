@@ -20,7 +20,7 @@ This command prepares the container and runs the Obsidian checks against the syn
 npm run docker:record
 ```
 
-The recording uses the container's virtual display. Results are exported under `artifacts/docker/`:
+The recording uses the container's virtual display and the everyday grocery-delivery scenario in `demo-vault/Examples/grocery-delivery.md`. It tours one complex flowchart in both themes without scrolling. Results are exported under `artifacts/docker/`:
 
 | Artifact | Purpose |
 | --- | --- |
@@ -48,3 +48,5 @@ The existing unit and browser suites remain available through `npm run check`. T
 Verified on 2026-10-09 with Linux ARM64 Obsidian 1.14.4 and plugin 0.1.2 inside Docker/Colima. `docker:record` passed 20 unit tests, 14 browser integration tests, the build, and real-app checks for both themes, ancestor highlighting, and 18 centered connector endpoints. A 15.2-second MP4 (1440 × 1000, 30 fps) and GIF were generated; representative frames were visually checked. See the [capture report](assets/obsidian-capture-report.md).
 
 The legacy `node scripts/record-obsidian-demo.mjs` entry point also routes to Docker and never starts the host Obsidian app.
+
+The grocery recording has 17 nodes and 22 flowchart connections. The endpoint-center metric is diagnostic for this mixed-shape diagram; it is not a strict centered-docking guarantee for every Mermaid shape. The smaller `docker:check` fixture retains its strict centered-endpoint assertions.
