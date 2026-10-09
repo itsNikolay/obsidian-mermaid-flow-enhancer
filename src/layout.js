@@ -90,7 +90,7 @@ function styleSvg(svg, direction, settings = {}) {
   const layoutNodes = [...doc.querySelectorAll("g.node")].map(node => {
     const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
-    return { node, key, center: t ? [Number(t[1]), Number(t[2])] : null };
+    return { node, key, center: t ? [Number(t[1]), Number(t[2])] : null, incoming: key ? nodeLimit(doc, key, direction, false) : NaN };
   }).filter(n => n.key && n.center);
   const layoutByKey = new Map(layoutNodes.map(n => [n.key, n]));
   const layoutEdges = [...doc.querySelectorAll("path.flowchart-link, .edgePath path.path")].map(path => {
@@ -125,7 +125,10 @@ function styleSvg(svg, direction, settings = {}) {
   for (const source of compactLayout ? layoutNodes : []) {
     const targets = [...new Set(layoutEdges.filter(e => e.from === source &&
       layoutSign * (e.to.center[layoutAxis] - source.center[layoutAxis]) > 0).map(e => e.to))];
-    if (targets.length < 2 || targets.some(n => Math.abs(n.center[layoutAxis] - targets[0].center[layoutAxis]) > 2)) continue;
+    if (targets.length < 2) continue;
+    const sameCenters = targets.every(n => Math.abs(n.center[layoutAxis] - targets[0].center[layoutAxis]) <= 2);
+    const sameIncomingSides = targets.every(n => Math.abs(n.incoming - targets[0].incoming) <= 2);
+    if (!sameCenters && !sameIncomingSides) continue;
     const limits = targets.map(n => nodeLimit(doc, n.key, direction, false));
     if (!limits.every(Number.isFinite)) continue;
     const level = layoutSign > 0 ? Math.min(...limits) : Math.max(...limits);
