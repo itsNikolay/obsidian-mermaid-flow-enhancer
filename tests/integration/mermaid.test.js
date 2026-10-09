@@ -4,6 +4,29 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
+function parseColor(value) {
+  const hex = value.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+  if (hex) {
+    const raw = hex[1].length === 3 ? [...hex[1]].map(c => c + c).join('') : hex[1];
+    return [0, 2, 4].map(i => parseInt(raw.slice(i, i + 2), 16));
+  }
+  const rgb = value.match(/rgba?\(\s*([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)/i);
+  if (!rgb) throw new Error(`Unrecognized computed color: ${value}`);
+  return rgb.slice(1, 4).map(Number);
+}
+
+function contrastRatio(foreground, background) {
+  const luminance = color => {
+    const channels = parseColor(color).map(channel => {
+      const s = channel / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    });
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const a = luminance(foreground), b = luminance(background);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 let bundlePath;
 let highlightBundlePath;
 let mermaidPath;
@@ -301,4 +324,39 @@ test('subgraph branches converge with valid routes and labels clear of other nod
   expect(result.edges).toHaveLength(5);
   expect(result.edges.every(edge => edge.d?.startsWith('M') && Number.isFinite(edge.length) && edge.length > 0 && !/NaN|undefined/.test(edge.d))).toBe(true);
   expect(result.overlaps).toEqual([]);
+});
+
+test('light and dark themes keep node text and connectors readable with matching shape fills', async ({ page }) => {
+  await setup(page);
+  const css = fs.readFileSync(path.resolve(__dirname, '../../styles.css'), 'utf8');
+  await page.addStyleTag({ content: css });
+  const svg = await renderStyled(page, 'flowchart TD\n  Rectangle[Rectangle node] --> Decision{Decision node}\n  Decision --> Finish[Finish]');
+
+  for (const theme of ['theme-light', 'theme-dark']) {
+    const colors = await page.evaluate(([svgText, themeName]) => {
+      document.body.className = themeName;
+      document.body.style.setProperty('--background-primary', themeName === 'theme-dark' ? '#16191f' : '#ffffff');
+      document.body.style.setProperty('--background-secondary', themeName === 'theme-dark' ? '#252b34' : '#f7f8fa');
+      document.body.style.setProperty('--text-normal', themeName === 'theme-dark' ? '#e6eaf0' : '#333333');
+      document.body.innerHTML += `<div class="mermaid">${svgText}</div>`;
+      const root = document.querySelector('.mermaid:last-child');
+      const rectangle = root.querySelector('.node[data-mpe-key="Rectangle"] rect');
+      const diamond = root.querySelector('.node[data-mpe-key="Decision"] polygon');
+      const label = root.querySelector('.node[data-mpe-key="Rectangle"] .nodeLabel');
+      const edge = root.querySelector('path.flowchart-link');
+      return {
+        rectangleFill: getComputedStyle(rectangle).fill,
+        diamondFill: getComputedStyle(diamond).fill,
+        text: getComputedStyle(label).color,
+        line: getComputedStyle(edge).stroke,
+        nodeBackground: getComputedStyle(root).getPropertyValue('--mpe-node').trim(),
+        canvasBackground: getComputedStyle(document.body).getPropertyValue('--background-primary').trim(),
+      };
+    }, [svg, theme]);
+
+    expect(colors.diamondFill, theme).toBe(colors.rectangleFill);
+    expect(contrastRatio(colors.text, colors.rectangleFill), `${theme} text/node contrast`).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.line, colors.canvasBackground), `${theme} line/background contrast`).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(colors.text, colors.nodeBackground), `${theme} text/background contrast`).toBeGreaterThanOrEqual(4.5);
+  }
 });
