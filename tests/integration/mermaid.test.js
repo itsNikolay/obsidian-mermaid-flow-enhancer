@@ -168,3 +168,83 @@ test('real SVG hover controller transitions directly between nodes and clears af
   expect(pageErrors).toEqual([]);
   await page.evaluate(() => mpeController.dispose());
 });
+
+test('compact layout aligns incoming tops for unequal rectangle and diamond nodes', async ({ page }) => {
+  await setup(page);
+  const diagram = 'flowchart TD\n  Start[Start] --> Short[Short]\n  Start --> Decision{A much taller decision label}';
+  const svg = await page.evaluate(async source => {
+    const { svg: raw } = await mermaid.render('boundary-alignment', source);
+    return MPELayout.styleSvg(raw, 'TD');
+  }, diagram);
+  const measurements = await page.evaluate(svgText => {
+    document.body.innerHTML = `<div class="mermaid">${svgText}</div>`;
+    return ['Short', 'Decision'].map(key => {
+      const node = [...document.querySelectorAll('g.node[data-mpe-key]')].find(n => n.dataset.mpeKey === key);
+      const shape = node.querySelector('rect, polygon');
+      const incoming = document.querySelector(`path[data-mpe-to="${key}"]`);
+      const point = incoming.getPointAtLength(incoming.getTotalLength());
+      const endpoint = new DOMPoint(point.x, point.y).matrixTransform(incoming.getScreenCTM());
+      return { top: shape.getBoundingClientRect().top, endpoint: endpoint.y };
+    });
+  }, svg);
+  expect(Math.abs(measurements[0].top - measurements[1].top)).toBeLessThanOrEqual(2);
+  expect(Math.abs(measurements[0].endpoint - measurements[1].endpoint)).toBeLessThanOrEqual(2);
+});
+
+test('compactLayout false preserves Mermaid geometry, classes, IDs, and link anchors', async ({ page }) => {
+  await setup(page);
+  const source = 'flowchart TD\n  A[Start] -->|go| B{Check}\n  B --> C[Finish]\n  class B special\n  classDef special fill:#abc\n  linkStyle 0 stroke:#f00';
+  const result = await page.evaluate(async source => {
+    const { svg: original } = await mermaid.render('before-geometry', source);
+    const transformed = MPELayout.styleSvg(original, 'TD', { compactLayout: false });
+    function inspect(text) {
+      const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+      return {
+        nodes: [...doc.querySelectorAll('g.node')].map(node => ({
+          key: node.id.match(/flowchart-(.+)-\d+$/)?.[1],
+          id: node.id,
+          class: node.getAttribute('class'),
+          transform: node.getAttribute('transform'),
+        })),
+        edges: [...doc.querySelectorAll('path.flowchart-link')].map(edge => ({
+          id: edge.id, class: edge.getAttribute('class'), d: edge.getAttribute('d'),
+          markerEnd: edge.getAttribute('marker-end'), dataId: edge.getAttribute('data-id'),
+        })),
+        markers: [...doc.querySelectorAll('marker')].map(marker => marker.id),
+      };
+    }
+    return { original: inspect(original), transformed: inspect(transformed) };
+  }, source);
+  expect(result.transformed.nodes.map(n => [n.key, n.transform]))
+    .toEqual(result.original.nodes.map(n => [n.key, n.transform]));
+  for (const original of result.original.nodes) {
+    const transformed = result.transformed.nodes.find(n => n.key === original.key);
+    for (const cls of original.class.split(/\s+/).filter(Boolean)) expect(transformed.class).toContain(cls);
+  }
+  expect(result.transformed.edges.map(e => [e.class, e.d, e.markerEnd, e.dataId]))
+    .toEqual(result.original.edges.map(e => [e.class, e.d, e.markerEnd, e.dataId]));
+  expect(result.transformed.nodes.find(n => n.key === 'B').class).toContain('special');
+  for (const edge of result.transformed.edges) {
+    const markerId = edge.markerEnd?.match(/#([^)'\"]+)/)?.[1];
+    if (markerId) expect(result.transformed.markers).toContain(markerId);
+  }
+});
+
+test('CSS restores faded nodes for print and disables motion when reduced motion is requested', async ({ page }) => {
+  await setup(page);
+  const css = fs.readFileSync(path.resolve(__dirname, '../../styles.css'), 'utf8');
+  await page.addStyleTag({ content: css });
+  const svg = await renderStyled(page, 'flowchart TD\n  A --> B --> C');
+  await page.evaluate(svgText => {
+    document.body.innerHTML = `<div class="mermaid">${svgText}</div>`;
+    document.querySelector('svg').classList.add('mpe-tracing');
+  }, svg);
+  const node = page.locator('.node[data-mpe-key="A"]');
+  await page.emulateMedia({ media: 'screen' });
+  expect(await node.evaluate(el => getComputedStyle(el).opacity)).toBe('0.22');
+  await page.emulateMedia({ media: 'print' });
+  expect(await node.evaluate(el => getComputedStyle(el).opacity)).toBe('1');
+  expect(await node.evaluate(el => getComputedStyle(el).transitionProperty)).toBe('none');
+  await page.emulateMedia({ media: 'screen', reducedMotion: 'reduce' });
+  expect(await node.evaluate(el => getComputedStyle(el).transitionProperty)).toBe('none');
+});

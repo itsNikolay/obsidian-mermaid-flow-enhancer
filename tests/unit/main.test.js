@@ -14,6 +14,7 @@ class FakePlugin {
 let mermaid;
 let loadMermaidCalls = 0;
 let styleCalls;
+let styleError = null;
 let lastController;
 const mockObsidian = {
   Plugin: FakePlugin,
@@ -28,7 +29,11 @@ Module._load = function (request, parent, isMain) {
   if (request === './layout') return {
     wrapDecisions: source => source.replace('long decision', 'long<br/>decision'),
     widenSingleRectangles: source => source,
-    styleSvg: (svg, direction, settings) => { styleCalls.push({ direction, settings }); return `${svg}|styled`; },
+    styleSvg: (svg, direction, settings) => {
+      styleCalls.push({ direction, settings });
+      if (styleError) throw styleError;
+      return `${svg}|styled`;
+    },
   };
   if (request === './highlight') return {
     createPathController: (doc, getSettings) => {
@@ -116,5 +121,42 @@ test('unload during asynchronous settings loading stops initialization', async (
   await loading;
   assert.equal(loadMermaidCalls, 0);
   assert.equal(plugin.domEvents.length, 0);
+  global.document = previousDocument;
+});
+
+test('main initializes defaults when Obsidian returns null for empty stored data', async () => {
+  const previousDocument = global.document;
+  global.document = fakeDocument();
+  const original = async () => '<svg/>';
+  mermaid = { render: original };
+  const plugin = new Plugin();
+  plugin.data = null;
+  await plugin.onload();
+  assert.deepEqual(plugin.settings, {
+    compactLayout: true, pathHighlight: true, animationDuration: 450, hoverDelay: 180,
+  });
+  for (const dispose of plugin.disposers) dispose();
+  global.document = previousDocument;
+});
+
+test('transformation errors return the renderer result and unloading restores renderer', async () => {
+  const previousDocument = global.document;
+  global.document = fakeDocument();
+  const originalResult = { svg: '<svg id="original"/>', bindFunctions: () => 'bound' };
+  const original = async () => originalResult;
+  mermaid = { render: original }; styleCalls = [];
+  const warnings = [];
+  const oldWarn = console.warn;
+  console.warn = (...args) => warnings.push(args);
+  styleError = new Error('synthetic transformation error');
+  const plugin = new Plugin();
+  await plugin.onload();
+  assert.equal(await mermaid.render('id', 'flowchart TD\nA-->B'), originalResult);
+  assert.match(warnings[0][0], /kept original SVG/);
+  assert.equal(warnings[0][1], styleError);
+  for (const dispose of plugin.disposers) dispose();
+  assert.equal(mermaid.render, original);
+  styleError = null;
+  console.warn = oldWarn;
   global.document = previousDocument;
 });
