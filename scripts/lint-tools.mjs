@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -58,5 +58,5 @@ if (mode === 'shell') run(await install('shellcheck'), ['--shell=bash', 'docker/
 else {
   const shellcheck = await install('shellcheck');
   const actionlint = await install('actionlint');
-  if (mode === 'workflows') run(actionlint, ['-shellcheck', shellcheck]);
+  if (mode === 'workflows') run(actionlint, ['-shellcheck', shellcheck, ...readdirSync(join(root, '.github/workflows')).filter(name => /\.ya?ml$/.test(name)).map(name => `.github/workflows/${name}`)]);
 }
