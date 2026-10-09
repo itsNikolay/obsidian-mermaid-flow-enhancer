@@ -10,8 +10,11 @@
   },
   "devDependencies": {
     "esbuild": "0.25.12",
-    "obsidian": "latest",
-    "@playwright/test": "latest",
-    "mermaid": "latest"
+    "obsidian": "1.14.4",
+    "@playwright/test": "1.64.0",
+    "mermaid": "12.1.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

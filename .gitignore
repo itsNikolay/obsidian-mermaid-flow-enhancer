@@ -3,4 +3,4 @@ node_modules/
 dist/
 test-results/
 playwright-report/
-demo-vault/.obsidian/workspace*.json
+demo-vault/.obsidian/

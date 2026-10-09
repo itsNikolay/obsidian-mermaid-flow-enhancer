@@ -15,7 +15,7 @@ const { styleSvg, widenSingleRectangles, wrapDecisions } = require("./layout");
 const { createPathController } = require("./highlight");
 const { normalizeSettings, EnhancerSettingsTab } = require("./settings");
 
-module.exports = class MermaidPreviewEnhanced extends Plugin {
+module.exports = class MermaidFlowEnhancer extends Plugin {
   async onload() {
     this.stopped = false;
     this.settings = normalizeSettings(await this.loadData());
