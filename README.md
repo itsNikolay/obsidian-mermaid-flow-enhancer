@@ -33,7 +33,7 @@ The plugin wraps Mermaid's render function and adjusts the generated SVG. It doe
 
 ## Release security checks
 
-New releases require a completed VirusTotal scan of the three plugin files before publication. Reports include SHA-256 hashes, engine verdicts, and public report links. Configuration and scan status are documented in the [VirusTotal guide](docs/virus-scanning.md). Existing releases are not claimed as scanned until their exact published files have a successful report.
+New releases require a completed VirusTotal scan of the three plugin files before publication. Reports include SHA-256 hashes, engine verdicts, and public report links. Configuration and scan status are documented in the [VirusTotal guide](docs/virus-scanning.md). [Release 0.1.2 scan](docs/security/virustotal-0.1.2.md): no detections among engines completing analysis on 2026-10-09 (0/60 JavaScript, 0/61 manifest, 0/56 CSS). Failed, timed-out, and unsupported engines are recorded in the JSON report. Earlier releases are not claimed as scanned.
 
 ## Requirements
 

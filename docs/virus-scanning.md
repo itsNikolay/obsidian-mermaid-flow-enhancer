@@ -31,7 +31,9 @@ A “no-detections” result is a scan result, not proof that software is safe. 
 
 ## Current status
 
-Integration is implemented. No live VirusTotal scan has been completed yet: the repository API secret was absent when this workflow was added. Existing releases must not be described as VirusTotal-verified until a successful manual scan produces a report for their exact hashes.
+The repository secret is configured. The [manual scan of release 0.1.2](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37963960312) completed successfully on 2026-10-09. Exact published hashes were independently compared with the downloaded report. Completed engine verdicts: `main.js` 0/60 detections, `manifest.json` 0/61, `styles.css` 0/56. One JavaScript engine failed, five CSS engines timed out, and 14 engines per file did not support the format; those are excluded from the completed-verdict counts and preserved in the [JSON report](security/virustotal-0.1.2.json).
+
+Read the [Markdown report](security/virustotal-0.1.2.md); both report formats are also attached to the [0.1.2 release](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/releases/tag/0.1.2). The full CI passed 34 unit tests and 14 browser integration tests (48 total), including 14 new mocked security tests. Earlier releases have not been claimed as scanned.
 
 ## API references
 

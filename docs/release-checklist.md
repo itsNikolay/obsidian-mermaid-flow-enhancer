@@ -51,3 +51,5 @@ The official 0.1.2 directory review completed and made 0.1.2 the current release
 - Require completed analyses for all three exact release artifacts, with no malicious/suspicious detections and at least one engine verdict each.
 - Review JSON statistics for failed/unsupported engines; preserve reports and SHA-256 hashes with the release.
 - Missing key, API errors, empty results, and timeouts block publication. See [setup and status](virus-scanning.md).
+
+VirusTotal baseline: release 0.1.2 completed the [real API scan](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37963960312) on 2026-10-09, with 0/60, 0/61, and 0/56 completed-engine detections. All three hashes matched independent release downloads; both reports are attached to the release. [Full statistics](security/virustotal-0.1.2.json) preserve engine failures/timeouts/unsupported results. All 48 tests and build passed locally and in GitHub CI.
