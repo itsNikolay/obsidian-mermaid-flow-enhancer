@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 (beta)
+
+- Scope styling directly to enhanced SVGs instead of using `:has()` selectors.
+- Keep light/dark colors, hover transitions, print, and normal Mermaid isolation intact.
+- Add GitHub build provenance attestations for release assets.
+- Publish the Obsidian Community listing and use directory-discoverable GitHub releases.
+
 ## 0.1.0 (beta)
 
 - Initial beta release of the Obsidian Mermaid Flow Enhancer.

@@ -34,3 +34,9 @@ Create a Git tag whose name exactly matches `manifest.json`'s `version` value, w
 On 2026-10-09, Node.js 22.16.0 passed 17 unit tests, 11 Chromium integration tests, and the esbuild build. GitHub Actions also passed for revision `6b025ac`. The integration suite exercises the actual Mermaid SVG, all supported flowchart directions, Unicode/underscore IDs, cycles, a subgraph with converging branches, unequal sibling boundaries, hover timers, opt-out geometry preservation, print, reduced motion, and computed text/connector contrast in both themes, and isolation from Obsidian’s native dark-mode inversion filter.
 
 The plugin was enabled in a clean Obsidian 1.14.2 vault on macOS. Its settings and enable/disable behavior worked; enhanced SVG rendering and light/dark screenshots were confirmed. This is desktop evidence only. Mobile devices, third-party plugin combinations, complex nested subgraphs, external beta feedback, and full upgrade/rollback testing remain open. Browser-stand timings for synthetic 100/300-node graphs are in [the performance report](assets/browser-preview-performance.md); they are not Obsidian timing measurements.
+
+## Directory review and 0.1.1
+
+The directory completed its 0.1.0 release scan without errors and reproduced `main.js` byte-for-byte. Its CSS warnings identified `:has()` and `!important`; its release recommendation requested artifact attestations. Version 0.1.1 removes `:has()` by scoping directly to enhanced SVG roots and adds GitHub provenance attestations. Scoped `!important` remains necessary to override Mermaid’s generated SVG ID rules and Obsidian’s native dark filter.
+
+For 0.1.1, 17 unit tests and 12 Chromium tests pass. The additional browser test checks actual faded opacity and highlighted strokes, including isolation from regular Mermaid SVGs.
