@@ -1,3 +1,12 @@
+function resolveEdge(doc, path) {
+  const id = path.getAttribute("data-id") || path.id;
+  const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/^flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
+  const pairs = [];
+  for (const from of keys) for (const to of keys) if (id.startsWith(`L_${from}_${to}_`)) pairs.push([null, from, to]);
+  // Ambiguous concatenations cannot be safely inferred from an SVG id.
+  return pairs.length === 1 ? pairs[0] : null;
+}
+
 function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel) {
   const vertical = /^(TD|TB|BT)$/.test(direction);
   const axis = vertical ? 1 : 0;
@@ -59,7 +68,8 @@ function roundPath(d, radius = 4) {
   return path + `L${points[points.length - 1].join(",")}`;
 }
 
-function styleSvg(svg, direction) {
+function styleSvg(svg, direction, settings = {}) {
+  const compactLayout = settings.compactLayout !== false;
   // HTML labels can contain this HTML-only entity; XML has no such entity.
   svg = svg.replace(/&nbsp;/g, "\u00a0").replace(/<br\s*>/gi, "<br/>");
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
@@ -91,7 +101,7 @@ function styleSvg(svg, direction) {
     const polygon = node.querySelector("polygon");
     const points = (polygon?.getAttribute("points") || "").trim().split(/\s+/).map(p => p.split(",").map(Number))
       .filter((p, i, all) => !i || p[0] !== all[0][0] || p[1] !== all[0][1]);
-    if (points.length !== 4) continue;
+    if (!compactLayout || points.length !== 4) continue;
     const cx = points.reduce((s, p) => s + p[0], 0) / 4;
     const cy = points.reduce((s, p) => s + p[1], 0) / 4;
     const hw = Math.max(...points.map(p => Math.abs(p[0] - cx)));
@@ -106,7 +116,7 @@ function styleSvg(svg, direction) {
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
     if (t && key) compactNodes.set(key, { center: [Number(t[1]), Number(t[2])], scale: [1, scale] });
   }
-  for (const source of layoutNodes) {
+  for (const source of compactLayout ? layoutNodes : []) {
     const targets = [...new Set(layoutEdges.filter(e => e.from === source &&
       layoutSign * (e.to.center[layoutAxis] - source.center[layoutAxis]) > 0).map(e => e.to))];
     if (targets.length < 2 || targets.some(n => Math.abs(n.center[layoutAxis] - targets[0].center[layoutAxis]) > 2)) continue;
@@ -133,8 +143,8 @@ function styleSvg(svg, direction) {
   const branchLevels = new Map();
   const outgoing = new Map();
   const sign = /^(BT|RL)$/.test(direction) ? -1 : 1;
-  for (const path of doc.querySelectorAll("path.flowchart-link, .edgePath path.path")) {
-    const edge = (path.getAttribute("data-id") || path.id).match(/^L_([^_]+)_([^_]+)_/);
+  for (const path of compactLayout ? doc.querySelectorAll("path.flowchart-link, .edgePath path.path") : []) {
+    const edge = resolveEdge(doc, path);
     if (!edge || !direction) continue;
     const source = [...doc.querySelectorAll("g.node")].find(n => n.id.startsWith(`flowchart-${edge[1]}-`));
     if (!source?.querySelector("polygon")) continue;
@@ -148,13 +158,13 @@ function styleSvg(svg, direction) {
   for (const [source, levels] of outgoing) {
     if (levels.length > 1) branchLevels.set(source, sign > 0 ? Math.min(...levels) : Math.max(...levels));
   }
-  for (const path of doc.querySelectorAll("path.flowchart-link, .edgePath path.path")) {
+  for (const path of compactLayout ? doc.querySelectorAll("path.flowchart-link, .edgePath path.path") : []) {
     const d = path.getAttribute("d") || "";
     const matches = [...d.matchAll(segment)];
     if (!matches.length || d.replace(segment, "").trim()) continue;
     const points = matches.map(m => [Number(m[2]), Number(m[3])])
       .filter((p, i, all) => !i || p[0] !== all[i - 1][0] || p[1] !== all[i - 1][1]);
-    const edge = (path.getAttribute("data-id") || path.id).match(/^L_([^_]+)_([^_]+)_/);
+    const edge = resolveEdge(doc, path);
     if (edge) {
       for (const [key, index] of [[edge[1], 0], [edge[2], points.length - 1]]) {
         const delta = alignedNodes.get(key);
@@ -230,6 +240,8 @@ function styleSvg(svg, direction) {
       path.setAttribute("stroke-width", "0");
     }
   }
+  doc.documentElement.classList.add("mfe-enhanced");
+  doc.documentElement.style.setProperty("--mpe-duration", `${settings.animationDuration ?? 450}ms`);
   return new XMLSerializer().serializeToString(doc.documentElement);
 }
 

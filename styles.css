@@ -1,7 +1,7 @@
 /* Mermaid appearance matched to the supplied Markdown Preview Enhanced screenshot.
  * The companion plugin sets font, wrapping and geometry before rendering.
  */
-.mermaid {
+.mermaid:has(svg.mfe-enhanced) {
   --mpe-node: #1f2020;
   --mpe-border: #aaaaaa;
   --mpe-group: #292c33;
@@ -16,7 +16,7 @@
   background: transparent;
   overflow-x: auto;
 }
-.theme-dark .mermaid {
+.theme-dark .mermaid:has(svg.mfe-enhanced) {
   --mpe-node: var(--background-secondary, #252830);
   --mpe-border: #7d8796;
   --mpe-group: var(--background-primary-alt, #20232a);
@@ -27,7 +27,7 @@
   --mpe-label: var(--background-primary, #1e2127);
   --mpe-highlight: #83b9e8;
 }
-.theme-light .mermaid {
+.theme-light .mermaid:has(svg.mfe-enhanced) {
   --mpe-node: #ffffff;
   --mpe-border: #a0a7b0;
   --mpe-group: #eeeeee;
@@ -38,86 +38,100 @@
   --mpe-label: #f8f8f8;
   --mpe-highlight: #397ab5;
 }
-.mermaid svg { display: block; max-width: 100%; height: auto; margin: 0; }
+.mermaid:has(svg.mfe-enhanced) svg { display: block; max-width: 100%; height: auto; margin: 0; }
 /* Keep font metrics established by the renderer to avoid clipped labels. */
-.mermaid .node :is(rect, circle, ellipse, polygon, path),
-.mermaid :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
+.mermaid:has(svg.mfe-enhanced) .node :is(rect, circle, ellipse, polygon, path),
+.mermaid:has(svg.mfe-enhanced) :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
   fill: var(--mpe-node) !important;
   stroke: var(--mpe-border) !important;
   stroke-width: 1px !important;
 }
-.mermaid .cluster rect {
+.mermaid:has(svg.mfe-enhanced) .cluster rect {
   fill: var(--mpe-group) !important;
   stroke: var(--mpe-group-border) !important;
   stroke-width: 1px !important;
 }
-.mermaid :is(.label, .nodeLabel, .edgeLabel, .cluster-label, .actor, .messageText, .noteText, .loopText, .labelText),
-.mermaid :is(.nodeLabel, .edgeLabel, .cluster-label) p {
+.mermaid:has(svg.mfe-enhanced) :is(.label, .nodeLabel, .edgeLabel, .cluster-label, .actor, .messageText, .noteText, .loopText, .labelText),
+.mermaid:has(svg.mfe-enhanced) :is(.nodeLabel, .edgeLabel, .cluster-label) p {
   color: var(--mpe-text) !important;
 }
-.mermaid text { fill: var(--mpe-text) !important; }
-.mermaid :is(.flowchart-link, .edgePath .path, .messageLine0, .messageLine1, .transition) {
+.mermaid:has(svg.mfe-enhanced) text { fill: var(--mpe-text) !important; }
+.mermaid:has(svg.mfe-enhanced) :is(.flowchart-link, .edgePath .path, .messageLine0, .messageLine1, .transition) {
   stroke: var(--mpe-line) !important;
   stroke-linecap: butt;
   stroke-linejoin: miter;
 }
-.mermaid .actor-line { stroke: var(--mpe-border) !important; }
-.mermaid marker :is(path, polygon) {
+.mermaid:has(svg.mfe-enhanced) .actor-line { stroke: var(--mpe-border) !important; }
+.mermaid:has(svg.mfe-enhanced) marker :is(path, polygon) {
   fill: var(--mpe-line) !important;
   stroke: var(--mpe-line) !important;
 }
-.mermaid :is(.edgeLabel, .edgeLabel p) {
+.mermaid:has(svg.mfe-enhanced) :is(.edgeLabel, .edgeLabel p) {
   background-color: var(--mpe-label) !important;
 }
-.mermaid .labelBkg { fill: var(--mpe-label) !important; }
-.mermaid rect.note {
+.mermaid:has(svg.mfe-enhanced) .labelBkg { fill: var(--mpe-label) !important; }
+.mermaid:has(svg.mfe-enhanced) rect.note {
   fill: var(--mpe-note) !important;
   stroke: var(--mpe-group-border) !important;
 }
-.mermaid .loopLine { stroke: var(--mpe-border) !important; }
+.mermaid:has(svg.mfe-enhanced) .loopLine { stroke: var(--mpe-border) !important; }
 
 /* Thin connectors and the subtle node shadow visible in the reference. */
-.mermaid .flowchart-link { stroke-width: 1px !important; }
-.mermaid .node rect { rx: 4px; ry: 4px; }
+.mermaid:has(svg.mfe-enhanced) .flowchart-link { stroke-width: 1px !important; }
+.mermaid:has(svg.mfe-enhanced) .node rect { rx: 4px; ry: 4px; }
 
-.theme-dark .mermaid .node :is(rect, polygon, circle, ellipse) {
+.theme-dark .mermaid:has(svg.mfe-enhanced) .node :is(rect, polygon, circle, ellipse) {
   filter: drop-shadow(1px 2px 2px #00000040);
 }
-.mermaid .nodeLabel p { line-height: 1.5 !important; margin: 0 !important; }
+.mermaid:has(svg.mfe-enhanced) .nodeLabel p { line-height: 1.5 !important; margin: 0 !important; }
 
-.theme-light .mermaid .node :is(rect, polygon, circle, ellipse) {
+.theme-light .mermaid:has(svg.mfe-enhanced) .node :is(rect, polygon, circle, ellipse) {
   filter: drop-shadow(1px 1px 1px #00000018);
 }
 
-.mermaid .edgeLabel p { border-radius: 3px; font-weight: 500; }
+.mermaid:has(svg.mfe-enhanced) .edgeLabel p { border-radius: 3px; font-weight: 500; }
 
 /* Keep transitions on the base state so leaving a path is smooth too. */
-.mermaid :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
-  transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1);
+.mermaid:has(svg.mfe-enhanced) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+  transition: opacity var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
-.mermaid .node :is(rect, polygon, circle, ellipse),
-.mermaid .flowchart-link {
-  transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1), stroke 450ms cubic-bezier(0.4, 0, 0.2, 1), stroke-width 450ms cubic-bezier(0.4, 0, 0.2, 1);
+.mermaid:has(svg.mfe-enhanced) .node :is(rect, polygon, circle, ellipse),
+.mermaid:has(svg.mfe-enhanced) .flowchart-link {
+  transition: opacity var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), stroke var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), stroke-width var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mermaid .mpe-tracing :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+.mermaid:has(svg.mfe-enhanced) .mpe-tracing :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
   opacity: 0.22;
 }
-.mermaid .mpe-tracing .mpe-on-path { opacity: 1 !important; }
-.mermaid .mpe-tracing .node.mpe-on-path :is(rect, polygon, circle, ellipse) {
+.mermaid:has(svg.mfe-enhanced) .mpe-tracing .mpe-on-path { opacity: 1 !important; }
+.mermaid:has(svg.mfe-enhanced) .mpe-tracing .node.mpe-on-path :is(rect, polygon, circle, ellipse) {
   stroke: var(--mpe-highlight) !important;
   stroke-width: 1.6px !important;
 }
-.mermaid .mpe-tracing .flowchart-link.mpe-on-path {
+.mermaid:has(svg.mfe-enhanced) .mpe-tracing .flowchart-link.mpe-on-path {
   stroke: var(--mpe-highlight) !important;
   stroke-width: 1.8px !important;
 }
-.mermaid .mpe-decision:focus-visible { outline: none; }
-.mermaid .mpe-decision:focus-visible polygon { stroke-width: 2px !important; }
+.mermaid:has(svg.mfe-enhanced) .mpe-decision:focus-visible { outline: none; }
+.mermaid:has(svg.mfe-enhanced) .mpe-decision:focus-visible polygon { stroke-width: 2px !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  .mermaid :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
-  .mermaid .node :is(rect, polygon, circle, ellipse) {
+  .mermaid:has(svg.mfe-enhanced) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
+  .mermaid:has(svg.mfe-enhanced) .node :is(rect, polygon, circle, ellipse) {
     transition: none;
   }
+}
+
+/* Printing must never capture a transient hover/focus state. */
+@media print {
+  .mermaid:has(svg.mfe-enhanced) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .mermaid:has(svg.mfe-enhanced) .node :is(rect, polygon, circle, ellipse) {
+    stroke: var(--mpe-border) !important;
+    stroke-width: 1px !important;
+    filter: none;
+  }
+  .mermaid:has(svg.mfe-enhanced) .flowchart-link { stroke: var(--mpe-line) !important; stroke-width: 1px !important; }
 }
