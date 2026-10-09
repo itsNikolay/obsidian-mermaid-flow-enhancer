@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0
+
+- Publish the first release without the beta designation.
+- Replace all `!important` CSS overrides with enhanced-SVG selector specificity while preserving theme colors, path highlighting, reduced motion, and print resets.
+- Migrate the plugin and developer tooling to strict TypeScript.
+- Add code, CSS, workflow, and shell linters; prevent new `!important` declarations.
+- Gate publication on completed VirusTotal scans and GitHub artifact attestations.
+- Add isolated Docker checks and recordings in real Obsidian, with a single-screen grocery delivery demonstration.
+- Cache CI tools and browser downloads, and use English throughout the interface and documentation.
+- Pass 34 unit tests and 14 browser integration tests; verify both themes in real Linux Obsidian 1.14.4.
+
 ## 0.1.2 (beta)
 
 - Refine the dark theme with slate-blue surfaces, clear text, softer shadows, and restrained path accents. Decision nodes share the same palette as other nodes.

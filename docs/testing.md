@@ -27,7 +27,7 @@ Continuous integration runs the same install, lint, typecheck, test, browser set
 
 ## Manual Obsidian check
 
-For a release candidate, copy `main.js`, `manifest.json`, and `styles.css` into a disposable vault's `.obsidian/plugins/mermaid-flow-enhancer/`, enable the plugin, and open the examples in `demo-vault/`. Check light and dark themes, keyboard focus, pointer movement between nodes and connectors, an opted-out diagram, and a larger generated fixture. This manual pass complements CI; it does not replace testing on the Obsidian versions and devices used by beta testers.
+For a release candidate, copy `main.js`, `manifest.json`, and `styles.css` into a disposable vault's `.obsidian/plugins/mermaid-flow-enhancer/`, enable the plugin, and open the examples in `demo-vault/`. Check light and dark themes, keyboard focus, pointer movement between nodes and connectors, an opted-out diagram, and a larger generated fixture. This manual pass complements CI; it does not replace testing on the Obsidian versions and devices used by users.
 
 ## Release workflow
 

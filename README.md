@@ -8,8 +8,6 @@ The button opens the official plugin installation page. Choose **Add to Obsidian
 
 **Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
 
-> **Beta:** This plugin is under active development. External user testing is pending. The [Community directory listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) is published with an active Add to Obsidian link. The initial scan completed; catalogue installation in the desktop app is still being verified. Please report issues with a small Mermaid example and your Obsidian version.
-
 ## Preview
 
 The screenshots and recordings show plugin 0.1.2 in real Linux Obsidian 1.14.4, running inside Docker with a synthetic vault.
