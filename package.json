@@ -1,0 +1,17 @@
+{
+  "name": "obsidian-mermaid-flow-enhancer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "test": "node --test tests/unit/*.test.js",
+    "test:integration": "playwright test",
+    "check": "npm test && npm run test:integration && npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "obsidian": "latest",
+    "@playwright/test": "latest",
+    "mermaid": "latest"
+  }
+}

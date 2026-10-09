@@ -1,0 +1,10 @@
+{
+  "id": "mermaid-flow-enhancer",
+  "name": "Mermaid Flow Enhancer",
+  "version": "0.1.0",
+  "minAppVersion": "1.14.2",
+  "description": "Enhance Mermaid flowcharts with compact layouts, aligned branches, and smooth ancestor path highlighting.",
+  "author": "itsNikolay",
+  "authorUrl": "https://github.com/itsNikolay",
+  "isDesktopOnly": false
+}

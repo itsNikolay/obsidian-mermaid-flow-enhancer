@@ -1,0 +1,123 @@
+/* Mermaid appearance matched to the supplied Markdown Preview Enhanced screenshot.
+ * The companion plugin sets font, wrapping and geometry before rendering.
+ */
+.mermaid {
+  --mpe-node: #1f2020;
+  --mpe-border: #aaaaaa;
+  --mpe-group: #292c33;
+  --mpe-group-border: #777777;
+  --mpe-note: #333333;
+  --mpe-text: #cccccc;
+  --mpe-line: #cccccc;
+  --mpe-label: #555555;
+  --mpe-highlight: #83b9e8;
+  margin-block: 12px;
+  padding: 0;
+  background: transparent;
+  overflow-x: auto;
+}
+.theme-dark .mermaid {
+  --mpe-node: var(--background-secondary, #252830);
+  --mpe-border: #7d8796;
+  --mpe-group: var(--background-primary-alt, #20232a);
+  --mpe-group-border: #596474;
+  --mpe-note: #383326;
+  --mpe-text: var(--text-normal, #e0e4eb);
+  --mpe-line: #b3bdca;
+  --mpe-label: var(--background-primary, #1e2127);
+  --mpe-highlight: #83b9e8;
+}
+.theme-light .mermaid {
+  --mpe-node: #ffffff;
+  --mpe-border: #a0a7b0;
+  --mpe-group: #eeeeee;
+  --mpe-group-border: #aaaaaa;
+  --mpe-note: #fff8db;
+  --mpe-text: #333333;
+  --mpe-line: #555555;
+  --mpe-label: #f8f8f8;
+  --mpe-highlight: #397ab5;
+}
+.mermaid svg { display: block; max-width: 100%; height: auto; margin: 0; }
+/* Keep font metrics established by the renderer to avoid clipped labels. */
+.mermaid .node :is(rect, circle, ellipse, polygon, path),
+.mermaid :is(rect.actor, rect.actor-top, rect.actor-bottom, .labelBox) {
+  fill: var(--mpe-node) !important;
+  stroke: var(--mpe-border) !important;
+  stroke-width: 1px !important;
+}
+.mermaid .cluster rect {
+  fill: var(--mpe-group) !important;
+  stroke: var(--mpe-group-border) !important;
+  stroke-width: 1px !important;
+}
+.mermaid :is(.label, .nodeLabel, .edgeLabel, .cluster-label, .actor, .messageText, .noteText, .loopText, .labelText),
+.mermaid :is(.nodeLabel, .edgeLabel, .cluster-label) p {
+  color: var(--mpe-text) !important;
+}
+.mermaid text { fill: var(--mpe-text) !important; }
+.mermaid :is(.flowchart-link, .edgePath .path, .messageLine0, .messageLine1, .transition) {
+  stroke: var(--mpe-line) !important;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+.mermaid .actor-line { stroke: var(--mpe-border) !important; }
+.mermaid marker :is(path, polygon) {
+  fill: var(--mpe-line) !important;
+  stroke: var(--mpe-line) !important;
+}
+.mermaid :is(.edgeLabel, .edgeLabel p) {
+  background-color: var(--mpe-label) !important;
+}
+.mermaid .labelBkg { fill: var(--mpe-label) !important; }
+.mermaid rect.note {
+  fill: var(--mpe-note) !important;
+  stroke: var(--mpe-group-border) !important;
+}
+.mermaid .loopLine { stroke: var(--mpe-border) !important; }
+
+/* Thin connectors and the subtle node shadow visible in the reference. */
+.mermaid .flowchart-link { stroke-width: 1px !important; }
+.mermaid .node rect { rx: 4px; ry: 4px; }
+
+.theme-dark .mermaid .node :is(rect, polygon, circle, ellipse) {
+  filter: drop-shadow(1px 2px 2px #00000040);
+}
+.mermaid .nodeLabel p { line-height: 1.5 !important; margin: 0 !important; }
+
+.theme-light .mermaid .node :is(rect, polygon, circle, ellipse) {
+  filter: drop-shadow(1px 1px 1px #00000018);
+}
+
+.mermaid .edgeLabel p { border-radius: 3px; font-weight: 500; }
+
+/* Keep transitions on the base state so leaving a path is smooth too. */
+.mermaid :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+  transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mermaid .node :is(rect, polygon, circle, ellipse),
+.mermaid .flowchart-link {
+  transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1), stroke 450ms cubic-bezier(0.4, 0, 0.2, 1), stroke-width 450ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mermaid .mpe-tracing :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel) {
+  opacity: 0.22;
+}
+.mermaid .mpe-tracing .mpe-on-path { opacity: 1 !important; }
+.mermaid .mpe-tracing .node.mpe-on-path :is(rect, polygon, circle, ellipse) {
+  stroke: var(--mpe-highlight) !important;
+  stroke-width: 1.6px !important;
+}
+.mermaid .mpe-tracing .flowchart-link.mpe-on-path {
+  stroke: var(--mpe-highlight) !important;
+  stroke-width: 1.8px !important;
+}
+.mermaid .mpe-decision:focus-visible { outline: none; }
+.mermaid .mpe-decision:focus-visible polygon { stroke-width: 2px !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mermaid :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
+  .mermaid .node :is(rect, polygon, circle, ellipse) {
+    transition: none;
+  }
+}
