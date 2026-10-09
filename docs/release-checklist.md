@@ -9,7 +9,7 @@ Use this checklist for each candidate release. The project is still in beta. Ext
 - [x] Record the Obsidian version and desktop platform used for manual verification: Obsidian 1.14.2 on macOS, disposable demo vault. Settings, enable/disable, enhanced rendering, and both themes checked.
 - [ ] Verify behavior on a mobile device. The manifest does not mark the plugin desktop-only, but mobile behavior is not yet verified.
 - [ ] Obtain external beta feedback and record issues or findings. External user testing is currently pending.
-- [ ] Record a short demo in actual Obsidian and review it for accidental exposure of private vault content. The recording is currently pending; do not use a mockup as evidence of an actual Obsidian run.
+- [x] Record a short demo in actual Obsidian and review it for accidental exposure of private vault content: [capture report](assets/obsidian-capture-report.md), real light/dark screenshots, path GIF, and MP4. Only synthetic demo content is visible.
 - [x] Confirm `manifest.json`, `versions.json`, and `CHANGELOG.md` agree on the version. Make the release tag exactly match the manifest version and omit a leading `v`.
 - [ ] Confirm the repository's GitHub Actions identity has permission to create releases and upload assets. GitHub release authentication and a completed release run are currently pending.
 
