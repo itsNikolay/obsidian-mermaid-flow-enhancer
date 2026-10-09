@@ -19,6 +19,7 @@ module.exports = class MermaidPreviewEnhanced extends Plugin {
   async onload() {
     this.stopped = false;
     this.settings = normalizeSettings(await this.loadData());
+    if (this.stopped) return;
     this.addSettingTab(new EnhancerSettingsTab(this.app, this));
     const hoverTarget = ".mermaid .node, .mermaid .flowchart-link, .mermaid .edgePath path.path, .mermaid .edgeLabels > .edgeLabel";
     const pendingClears = new Map();
