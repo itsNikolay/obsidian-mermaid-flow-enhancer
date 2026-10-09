@@ -3,7 +3,7 @@ function resolveEdge(doc, path) {
   let index = edgeIndexes.get(doc);
   if (!index) {
     index = new Map();
-    const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/^flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
+    const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
     for (const from of keys) for (const to of keys) {
       const prefix = `L_${from}_${to}_`;
       index.set(prefix, index.has(prefix) ? null : [null, from, to]);
@@ -34,7 +34,7 @@ function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel
 }
 
 function nodeLimit(doc, key, direction, outgoing) {
-  const node = [...doc.querySelectorAll("g.node")].find(n => n.id.startsWith(`flowchart-${key}-`));
+  const node = [...doc.querySelectorAll("g.node")].find(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] === key);
   if (!node) return undefined;
   const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
   const shape = node.querySelector("polygon, rect");
@@ -88,7 +88,7 @@ function styleSvg(svg, direction, settings = {}) {
   const layoutAxis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
   const layoutSign = /^(BT|RL)$/.test(direction) ? -1 : 1;
   const layoutNodes = [...doc.querySelectorAll("g.node")].map(node => {
-    const key = node.id.match(/^flowchart-(.+)-\d+$/)?.[1];
+    const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
     return { node, key, center: t ? [Number(t[1]), Number(t[2])] : null };
   }).filter(n => n.key && n.center);
@@ -99,7 +99,7 @@ function styleSvg(svg, direction, settings = {}) {
   }).filter(e => e?.from && e?.to);
   const compactNodes = new Map();
   for (const node of doc.querySelectorAll("g.node")) {
-    const key = node.id.match(/^flowchart-(.+)-\d+$/)?.[1];
+    const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     if (key) {
       node.setAttribute("data-mpe-key", key);
       node.setAttribute("tabindex", "0");
@@ -152,7 +152,7 @@ function styleSvg(svg, direction, settings = {}) {
   for (const path of compactLayout ? doc.querySelectorAll("path.flowchart-link, .edgePath path.path") : []) {
     const edge = resolveEdge(doc, path);
     if (!edge || !direction) continue;
-    const source = [...doc.querySelectorAll("g.node")].find(n => n.id.startsWith(`flowchart-${edge[1]}-`));
+    const source = [...doc.querySelectorAll("g.node")].find(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] === edge[1]);
     if (!source?.querySelector("polygon")) continue;
     const a = nodeLimit(doc, edge[1], direction, true);
     const b = nodeLimit(doc, edge[2], direction, false);
@@ -253,7 +253,7 @@ function widenSingleRectangles(source, svg, direction) {
   const doc = new DOMParser().parseFromString(svg.replace(/<br\s*>/gi, "<br/>"), "image/svg+xml");
   const nodes = [...doc.querySelectorAll("g.node")].map(node => {
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
-    const key = node.id.match(/^flowchart-(.+)-\d+$/)?.[1];
+    const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     return { key, y: t ? Number(t[2]) : NaN, rect: !!node.querySelector("rect") };
   }).filter(n => n.key && Number.isFinite(n.y));
   const single = new Set(nodes.filter(n => n.rect &&
