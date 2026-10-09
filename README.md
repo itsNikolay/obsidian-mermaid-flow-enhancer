@@ -31,6 +31,10 @@ Supplemental 0.1.0 [browser previews](docs/assets/path-highlight.gif) show the s
 
 The plugin wraps Mermaid's render function and adjusts the generated SVG. It does not rewrite your notes.
 
+## Release security checks
+
+New releases require a completed VirusTotal scan of the three plugin files before publication. Reports include SHA-256 hashes, engine verdicts, and public report links. Configuration and scan status are documented in the [VirusTotal guide](docs/virus-scanning.md). Existing releases are not claimed as scanned until their exact published files have a successful report.
+
 ## Requirements
 
 - Obsidian 1.14.2 or later (the conservative minimum declared in the plugin manifest).

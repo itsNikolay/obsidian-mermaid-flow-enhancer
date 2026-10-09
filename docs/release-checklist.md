@@ -44,3 +44,10 @@ The official 0.1.1 directory scan completed on 2026-10-09 and made 0.1.1 the cur
 New browser checks measure actual side-center positions and terminal tangents in TD/TB/BT/LR/RL, circles, and nested subgraphs, including Mermaid's native rounded quadratic paths. Actual Obsidian 1.14.2/macOS rendering in the disposable demo vault was refreshed with a versioned synthetic fixture: all 18 endpoints match shape side centers, the referenced pointEnd marker is 8×8, and the developer error log is empty. Cached diagrams may need a note refresh after a plugin update.
 
 The official 0.1.2 directory review completed and made 0.1.2 the current release. The directory verified both artifact attestations and reproduced the release JavaScript byte-for-byte; the remaining finding is the previously documented scoped CSS `!important` warning.
+
+## VirusTotal gate
+
+- Configure the repository secret `VIRUSTOTAL_API_KEY`.
+- Require completed analyses for all three exact release artifacts, with no malicious/suspicious detections and at least one engine verdict each.
+- Review JSON statistics for failed/unsupported engines; preserve reports and SHA-256 hashes with the release.
+- Missing key, API errors, empty results, and timeouts block publication. See [setup and status](virus-scanning.md).

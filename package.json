@@ -8,7 +8,8 @@
     "test:integration": "playwright test",
     "check": "npm test && npm run test:integration && npm run build",
     "docker:check": "node scripts/run-docker.mjs check",
-    "docker:record": "node scripts/run-docker.mjs record"
+    "docker:record": "node scripts/run-docker.mjs record",
+    "scan:virustotal": "node scripts/scan-virustotal.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

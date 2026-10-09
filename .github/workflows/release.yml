@@ -11,9 +11,14 @@ permissions:
   attestations: write
   artifact-metadata: write
 
+concurrency:
+  group: virustotal-public-api
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -25,6 +30,17 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:integration
       - run: npm run build
+      - name: Scan release files with VirusTotal
+        env:
+          VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+        run: npm run scan:virustotal
+      - name: Preserve VirusTotal report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: virustotal-report
+          path: artifacts/virustotal/
+          if-no-files-found: warn
       - name: Attest release artifacts
         uses: actions/attest@v4
         with:
@@ -42,7 +58,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if [[ "$RELEASE_TAG" == 0.* ]]; then
-            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes --title "Mermaid Flow Enhancer $RELEASE_TAG — desktop beta"
+            gh release create "$RELEASE_TAG" main.js manifest.json styles.css artifacts/virustotal/virustotal-report.json artifacts/virustotal/virustotal-report.md --generate-notes --title "Mermaid Flow Enhancer $RELEASE_TAG — desktop beta"
           else
-            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes
+            gh release create "$RELEASE_TAG" main.js manifest.json styles.css artifacts/virustotal/virustotal-report.json artifacts/virustotal/virustotal-report.md --generate-notes
           fi
