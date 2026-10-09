@@ -37,7 +37,7 @@ function highlightAncestors(element) {
 }
 
 
-function createPathController(document, getSettings, timers = { setTimeout, clearTimeout }) {
+function createPathController(document, getSettings, timers = { setTimeout: (fn, delay) => setTimeout(fn, delay), clearTimeout: id => clearTimeout(id) }) {
   const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel";
   const pending = new Map();
   let disposed = false;
