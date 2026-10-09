@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-beta.1
+## 0.1.0 (beta)
 
 - Initial beta release of the Obsidian Mermaid Flow Enhancer.
 - Adds compact flowchart layout adjustments, aligned decision branches, rounded orthogonal connectors, and ancestor path highlighting.
