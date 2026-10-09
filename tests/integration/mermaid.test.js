@@ -248,3 +248,57 @@ test('CSS restores faded nodes for print and disables motion when reduced motion
   await page.emulateMedia({ media: 'screen', reducedMotion: 'reduce' });
   expect(await node.evaluate(el => getComputedStyle(el).transitionProperty)).toBe('none');
 });
+
+test('subgraph branches converge with valid routes and labels clear of other node shapes', async ({ page }) => {
+  await setup(page);
+  const svg = await renderStyled(page,
+    'flowchart TD\n' +
+    '  subgraph Checks[Preflight checks]\n' +
+    '    direction LR\n' +
+    '    Input[Collect the user input] --> Complete{Input is complete?}\n' +
+    '    Policy[Read the access policy] --> Allowed{Policy allows this action?}\n' +
+    '  end\n' +
+    '  Complete -->|ready| Merge[Combine the check results]\n' +
+    '  Allowed -->|permitted| Merge\n' +
+    '  Merge --> Continue[Continue to the next step]');
+  const result = await page.evaluate(svgText => {
+    document.body.innerHTML = `<div class="mermaid">${svgText}</div>`;
+    const nodes = [...document.querySelectorAll('g.node[data-mpe-key]')];
+    const nodeInfo = nodes.map(node => {
+      const shape = node.querySelector('rect, polygon, circle, ellipse');
+      const label = node.querySelector('foreignObject');
+      const box = el => {
+        const { left, right, top, bottom } = el.getBoundingClientRect();
+        return { left, right, top, bottom };
+      };
+      return { key: node.dataset.mpeKey, shape: shape && box(shape), label: label && box(label) };
+    });
+    const overlaps = [];
+    for (const item of nodeInfo) for (const other of nodeInfo) {
+      if (item.key === other.key || !item.label || !other.shape) continue;
+      const x = Math.min(item.label.right, other.shape.right) - Math.max(item.label.left, other.shape.left);
+      const y = Math.min(item.label.bottom, other.shape.bottom) - Math.max(item.label.top, other.shape.top);
+      if (x > 1 && y > 1) overlaps.push([item.key, other.key, x, y]);
+    }
+    const edges = [...document.querySelectorAll('path.flowchart-link[data-mpe-from][data-mpe-to]')].map(path => ({
+      from: path.dataset.mpeFrom,
+      to: path.dataset.mpeTo,
+      d: path.getAttribute('d'),
+      length: path.getTotalLength(),
+    }));
+    return {
+      parserError: !!document.querySelector('parsererror'),
+      keys: nodeInfo.map(node => node.key),
+      overlaps,
+      edges,
+      subgraph: !!document.querySelector('g.cluster'),
+    };
+  }, svg);
+  expect(result.parserError).toBe(false);
+  expect(result.subgraph).toBe(true);
+  expect(result.keys).toEqual(expect.arrayContaining(['Input', 'Complete', 'Policy', 'Allowed', 'Merge', 'Continue']));
+  expect(result.edges.filter(edge => edge.to === 'Merge')).toHaveLength(2);
+  expect(result.edges).toHaveLength(5);
+  expect(result.edges.every(edge => edge.d?.startsWith('M') && Number.isFinite(edge.length) && edge.length > 0 && !/NaN|undefined/.test(edge.d))).toBe(true);
+  expect(result.overlaps).toEqual([]);
+});
