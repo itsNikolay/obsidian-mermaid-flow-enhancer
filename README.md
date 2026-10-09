@@ -6,6 +6,14 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 > **Beta:** This plugin is under active development. External user testing and submission to the Obsidian Community plugins directory are still pending. Please report issues with a small Mermaid example and your Obsidian version.
 
+## Preview
+
+These GIFs use the plugin's actual layout and hover modules in a browser test stand. They are **browser previews**, not recordings of Obsidian.
+
+![Smooth ancestor path highlighting in a Mermaid flowchart](docs/assets/path-highlight.gif)
+
+[Light and dark theme preview](docs/assets/themes.gif) · [Compact layout preview](docs/assets/compact-layout.gif) · [Short video](docs/assets/browser-preview.mp4) · [Print sample PDF](docs/assets/browser-preview-print.pdf)
+
 ## Features
 
 - Compact flowchart spacing with readable labels.
@@ -22,7 +30,7 @@ The plugin wraps Mermaid's render function and adjusts the generated SVG. It doe
 - Obsidian 1.14.2 or later (the conservative minimum declared in the plugin manifest).
 - Desktop and mobile are declared as supported by the manifest; beta testing across devices is pending.
 
-No additional service or account is required.
+The plugin runs locally without telemetry or network requests. No additional service or account is required. Development and downloading releases require network access.
 
 ## Install
 
@@ -39,6 +47,7 @@ No additional service or account is required.
 git clone https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer.git
 cd obsidian-mermaid-flow-enhancer
 npm ci
+npx playwright install chromium
 npm test
 npm run test:integration
 npm run build

@@ -35,9 +35,7 @@ async function render() {
     flowchart: { curve: "step", nodeSpacing: 28, rankSpacing: 26, padding: 10, diagramPadding: 4, wrappingWidth: 140, useMaxWidth: false } });
   const result = await mermaid.render(`demo-flow-${thisRender}`, source);
   if (thisRender !== renderId) return;
-  // Mermaid prefixes generated IDs with the render ID; the enhancer's SVG
-  // lookup intentionally consumes Mermaid's canonical flowchart-* IDs.
-  const svg = result.svg.replaceAll(`demo-flow-${thisRender}-`, "");
+  const svg = result.svg;
   diagram.innerHTML = styleSvg(svg, "LR", { compactLayout, animationDuration: 450 });
 }
 
@@ -46,7 +44,7 @@ window.measureFlow = async count => {
   for (let i = 1; i < count; i++) lines.push(`n${i - 1} --> n${i}[Step ${i}]`);
   const started = performance.now();
   const result = await mermaid.render(`perf-flow-${count}`, lines.join("\n"));
-  const svg = result.svg.replaceAll(`perf-flow-${count}-`, "");
+  const svg = result.svg;
   const enhanced = styleSvg(svg, "LR", { compactLayout: true, animationDuration: 450 });
   return { nodes: count, edges: count - 1, renderAndEnhanceMs: +(performance.now() - started).toFixed(1), svgBytes: enhanced.length };
 };

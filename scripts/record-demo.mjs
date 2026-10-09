@@ -6,15 +6,13 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
 const here = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const packageRoot = "/Users/nikolayponomarev/projects/itsNikolay/vimwiki/Projects/obsidian-mermaid-flow-enhancer";
+const packageRoot = here;
 const require = createRequire(join(packageRoot, "package.json"));
 const esbuild = require("esbuild");
 const { chromium } = require("playwright");
 const out = join(here, "docs/assets");
 const generated = join(here, "docs/demo/demo.js");
-const cachedChromium = "/Users/nikolayponomarev/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
-const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
-  (existsSync(chromium.executablePath()) ? chromium.executablePath() : cachedChromium);
+const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || chromium.executablePath();
 await mkdir(out, { recursive: true });
 for (const file of await readdir(out)) if (file.endsWith(".webm")) await unlink(join(out, file));
 await esbuild.build({ entryPoints: [join(here, "scripts/demo-entry.js")], outfile: generated,

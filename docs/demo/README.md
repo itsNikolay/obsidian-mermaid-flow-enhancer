@@ -8,6 +8,6 @@ Regenerate the browser-preview GIFs, MP4, theme screenshots, print PDF, and node
 node scripts/record-demo.mjs
 ```
 
-The script expects the project dependencies under `Projects/obsidian-mermaid-flow-enhancer/node_modules`, Playwright Chromium, and `ffmpeg`. It uses the Playwright browser when installed; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can point to another Chromium binary. It creates the browser bundle at `docs/demo/demo.js` and media under `docs/assets/`; the generated bundle and temporary recordings are ignored by Git.
+The script expects the project dependencies installed with `npm ci` in the repository, Playwright Chromium, and `ffmpeg`. It uses the Playwright browser when installed; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can point to another Chromium binary. It creates the browser bundle at `docs/demo/demo.js` and media under `docs/assets/`; the generated bundle and temporary recordings are ignored by Git.
 
 The timings in `docs/assets/browser-preview-performance.md` cover Mermaid rendering plus the plugin layout transform for synthetic linear diagrams in this Chromium run. They do not measure Obsidian or user-device performance.
