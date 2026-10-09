@@ -6,7 +6,9 @@
     "build": "node esbuild.config.mjs",
     "test": "node --test tests/unit/*.test.js",
     "test:integration": "playwright test",
-    "check": "npm test && npm run test:integration && npm run build"
+    "check": "npm test && npm run test:integration && npm run build",
+    "docker:check": "node scripts/run-docker.mjs check",
+    "docker:record": "node scripts/run-docker.mjs record"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

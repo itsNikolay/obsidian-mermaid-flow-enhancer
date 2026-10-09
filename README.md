@@ -8,11 +8,11 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 ## Preview
 
-The screenshots show plugin 0.1.2 in the real Obsidian app, version 1.14.2, using a synthetic fixture note.
+The screenshots and recordings show plugin 0.1.2 in real Linux Obsidian 1.14.4, running inside Docker with a synthetic vault.
 
 ![Refined dark theme and centered connector attachments](docs/assets/obsidian-preview-dark.png)
 
-The GIF and MP4 below were recorded with plugin 0.1.0. They demonstrate path highlighting; the screenshots show the current appearance and connector attachments.
+The GIF and MP4 demonstrate ancestor-path highlighting in both themes. The MP4 records the virtual screen at 30 fps; no host Obsidian window or personal notes were used.
 
 ![Ancestor path highlighting in a real Obsidian window](docs/assets/obsidian-path-highlight.gif)
 
@@ -50,6 +50,10 @@ Open the [Mermaid Flow Enhancer listing](https://community.obsidian.md/plugins/m
 2. Create `<your-vault>/.obsidian/plugins/mermaid-flow-enhancer/`.
 3. Copy all three files into that directory.
 4. In Obsidian, open **Settings → Community plugins**, enable community plugins if prompted, then enable **Mermaid Flow Enhancer**.
+
+### Isolated application tests and recordings
+
+Use `npm run docker:check` or `npm run docker:record` to run real Linux Obsidian in Docker without opening the host app. See the [Docker testing guide](docs/docker-testing.md) for exported videos, screenshots, and reports.
 
 ### For development
 

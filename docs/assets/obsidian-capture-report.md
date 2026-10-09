@@ -1,11 +1,9 @@
-# Obsidian app capture report
+# Obsidian Docker capture report
 
-The light and dark screenshots show plugin 0.1.2 in real Obsidian 1.14.2, using the clean `mermaid-flow-enhancer-demo` vault and synthetic `Examples/Release flow.md` fixture. Frames came from the official `obsidian dev:screenshot` command.
+Captured on 2026-10-09 using real Linux ARM64 Obsidian 1.14.4 and Mermaid Flow Enhancer 0.1.2 inside Docker (Colima). The disposable vault contains only the synthetic Demo.md fixture. No host Obsidian window, personal vault, configuration, or account was used. Runtime network access was disabled.
 
-Live SVG verification measured 9 edges: all 18 endpoints attach to shape-side midpoints, with maximum deviation below 0.001 CSS px. All referenced arrow markers are 8 × 8. The dark enhanced SVG has no inversion filter. Screenshots were visually checked in both themes.
+The Docker run passed all 20 unit tests, 14 browser integration tests, the production build, and application smoke checks. The real app rendered 8 nodes; all 18 connector endpoints attach to shape-side midpoints (maximum measured deviation 0.0000610 CSS px). Hovering Release highlighted its ancestor path. Both light and dark palettes were checked; page errors: none.
 
-The GIF and MP4 remain recordings of plugin 0.1.0. Pointer movement used `Input.dispatchMouseEvent` through `obsidian dev:cdp`. The GIF uses 10 real screenshots over about 8.8 seconds; the MP4 uses 18 over about 14.5 seconds and preserves their recorded intervals. Screenshot sampling does not reproduce every animation frame at full display refresh. The GIF is 0.07 MiB and MP4 is 0.17 MiB.
+FFmpeg recorded the container's Xvfb screen at 1440 × 1000, 30 fps: 15.2 seconds and 456 frames. The GIF is a 960-pixel-wide, 12 fps conversion. Representative light and dark video frames were visually checked: the diagram and hover highlighting are visible without the Settings popup covering the scene. PNG screenshots came from the same application's DevTools connection.
 
-The recorder now removes an existing screenshot destination before capture and verifies centered endpoints and marker size. A fresh diagram render is required after upgrading because Obsidian can retain cached Mermaid SVGs.
-
-No errors were reported by `obsidian dev:errors` after plugin verification. This is a smoke check from one Obsidian build, theme setup, and machine, not a cross-version compatibility or performance benchmark.
+Reproduce with `npm run docker:record`; generated artifacts and the machine-readable report are under `artifacts/docker/`. The historical browser-only media use a separate test stand. This Linux smoke check does not establish macOS, Windows, or mobile compatibility.

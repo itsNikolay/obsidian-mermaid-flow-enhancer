@@ -6,3 +6,5 @@ playwright-report/
 demo-vault/.obsidian/
 docs/demo/demo.js
 docs/assets/*.webm
+
+artifacts/
