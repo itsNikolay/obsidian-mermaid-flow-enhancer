@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const clientModule = import('../../scripts/virustotal-client.mjs');
+const clientModule = import('../../scripts/virustotal-client.mts');
 const secret = 'unit-test-secret-not-a-real-key';
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { createHash } = require('node:crypto');
-const scanModule = import('../../scripts/scan-virustotal.mjs');
+const scanModule = import('../../scripts/scan-virustotal.mts');
 const cleanStats = { malicious: 0, suspicious: 0, undetected: 3, harmless: 1 };
 
 async function fixture(t) {

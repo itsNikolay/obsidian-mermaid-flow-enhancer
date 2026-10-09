@@ -8,4 +8,4 @@ Run future Obsidian checks and demonstration recordings in the project's Docker 
 
 ## Code quality
 
-Run `npm run check` before publishing changes. It includes ESLint, Stylelint, actionlint, ShellCheck, tests, and the build. Keep generated output excluded and supply fixed filenames to Stylelint; see [linting](docs/linting.md).
+Run `npm run check` before publishing changes. It includes ESLint, Stylelint, actionlint, ShellCheck, strict TypeScript checking, tests, and the build. Keep generated output excluded and supply fixed filenames to Stylelint; see [linting](docs/linting.md).

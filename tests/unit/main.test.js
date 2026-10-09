@@ -48,7 +48,7 @@ Module._load = function (request, parent, isMain) {
   };
   return originalLoad.call(this, request, parent, isMain);
 };
-const Plugin = require('../../src/main');
+const Plugin = require('../../src/main.ts').default;
 Module._load = originalLoad;
 
 function fakeDocument(theme = 'theme-dark') {

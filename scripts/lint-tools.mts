@@ -4,9 +4,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
+type ToolName = 'actionlint' | 'shellcheck';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const platform = `${process.platform}-${process.arch}`;
-const checksums = {
+const checksums: Record<ToolName, Record<string, string>> = {
   actionlint: {
     'darwin-x64': '17ffc17fed8f0258ef6ad4aed932d3272464c7ef7d64e1cb0d65aa97c9752107',
     'darwin-arm64': 'a21ba7366d8329e7223faee0ed69eb13da27fe8acabb356bb7eb0b7f1e1cb6d8',
@@ -26,12 +27,12 @@ const definitions = {
   shellcheck: { version: '0.11.0', repository: 'koalaman/shellcheck',
     archive: `shellcheck-v0.11.0.${process.platform}.${process.arch === 'x64' ? 'x86_64' : 'aarch64'}.tar.gz`, entry: 'shellcheck-v0.11.0/shellcheck' },
 };
-function run(command, args) {
+function run(command: string, args: string[]) {
   const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${command} exited with ${result.status ?? result.signal}`);
 }
-async function install(name) {
+async function install(name: ToolName) {
   const definition = definitions[name];
   const checksum = checksums[name][platform];
   if (!checksum) throw new Error(`Unsupported lint platform ${platform}; use npm run docker:check.`);
@@ -53,7 +54,7 @@ async function install(name) {
   return binary;
 }
 const mode = process.argv[2];
-if (!['install', 'workflows', 'shell'].includes(mode)) throw new Error('Expected install, workflows, or shell.');
+if (!['install', 'workflows', 'shell'].includes(mode ?? '')) throw new Error('Expected install, workflows, or shell.');
 if (mode === 'shell') run(await install('shellcheck'), ['--shell=bash', 'docker/entrypoint.sh']);
 else {
   const shellcheck = await install('shellcheck');

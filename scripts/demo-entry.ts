@@ -1,7 +1,7 @@
-const mermaid = require("mermaid").default;
-const { styleSvg } = require("../src/layout");
-const { createPathController } = require("../src/highlight");
-const pluginCss = require("../styles.css");
+import mermaid from "mermaid";
+import { styleSvg } from "../src/layout";
+import { createPathController } from "../src/highlight";
+import pluginCss from "../styles.css";
 
 const source = `flowchart LR
   request["Feature request"] --> triage["Triage the request"]
@@ -16,7 +16,7 @@ const source = `flowchart LR
   release --> done(("Complete"))`;
 
 const root = document.documentElement;
-const diagram = document.getElementById("diagram");
+const diagram = document.getElementById("diagram") ?? (() => { throw new Error("Demo diagram container is missing"); })();
 let compactLayout = true;
 let renderId = 0;
 const pathController = createPathController(document, () => ({ pathHighlight: true, hoverDelay: 180 }));
@@ -39,7 +39,7 @@ async function render() {
   diagram.innerHTML = styleSvg(svg, "LR", { compactLayout, animationDuration: 450 });
 }
 
-window.measureFlow = async count => {
+window.measureFlow = async (count: number) => {
   const lines = ["flowchart LR", "n0[Start]"];
   for (let i = 1; i < count; i++) lines.push(`n${i - 1} --> n${i}[Step ${i}]`);
   const started = performance.now();
@@ -50,15 +50,18 @@ window.measureFlow = async count => {
 };
 
 document.head.insertAdjacentHTML("beforeend", `<style>${pluginCss}</style>`);
-document.getElementById("theme").addEventListener("click", async event => {
+document.getElementById("theme")!.addEventListener("click", async event => {
   root.classList.toggle("theme-dark"); root.classList.toggle("theme-light");
   document.body.classList.toggle("theme-dark"); document.body.classList.toggle("theme-light");
-  event.currentTarget.textContent = root.classList.contains("theme-dark") ? "Switch to light" : "Switch to dark";
+  (event.currentTarget as HTMLElement).textContent = root.classList.contains("theme-dark") ? "Switch to light" : "Switch to dark";
   await render();
 });
-document.getElementById("compact").addEventListener("click", async event => {
+document.getElementById("compact")!.addEventListener("click", async event => {
   compactLayout = !compactLayout;
-  event.currentTarget.textContent = `Compact nodes: ${compactLayout ? "on" : "off"}`;
+  (event.currentTarget as HTMLElement).textContent = `Compact nodes: ${compactLayout ? "on" : "off"}`;
   await render();
 });
-render();
+render().catch(error => {
+  console.error("Mermaid demo rendering failed", error);
+  diagram.textContent = "Unable to render this diagram.";
+});

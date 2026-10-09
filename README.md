@@ -78,6 +78,7 @@ git clone https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer.git
 cd obsidian-mermaid-flow-enhancer
 npm ci
 npx playwright install chromium
+npm run typecheck
 npm test
 npm run test:integration
 npm run build
@@ -129,6 +130,8 @@ Open the Markdown files under [`demo-vault/`](demo-vault/) in a disposable test 
 The plugin uses Obsidian's Mermaid loader and Mermaid's generated SVG structure. Obsidian or Mermaid updates can change that structure, so compatibility beyond the manifest minimum has not yet been established. Please include your Obsidian version, platform, theme, and a minimal diagram when [opening an issue](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/issues/new/choose).
 
 ## Development
+
+The plugin and development scripts are written in TypeScript with strict type checking. `npm run typecheck` checks types; `npm run check` runs linting, type checking, all tests, and the build. The distributable remains a JavaScript `main.js` bundle for Obsidian.
 
 See [testing and development](docs/testing.md) and the [demo script](docs/demo-script.md).
 

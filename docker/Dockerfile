@@ -15,6 +15,6 @@ COPY package.json package-lock.json ./
 RUN npm ci && npx playwright install --with-deps chromium
 RUN apt-get install -y --no-install-recommends xdotool && rm -rf /var/lib/apt/lists/*
 COPY . .
-RUN node scripts/lint-tools.mjs install
+RUN npx tsx scripts/lint-tools.mts install
 ENV MFE_DOCKER=1 DISPLAY=:99 OBSIDIAN_EXECUTABLE=/opt/squashfs-root/obsidian OBSIDIAN_VERSION=${OBSIDIAN_VERSION}
 CMD ["bash", "docker/entrypoint.sh", "check"]

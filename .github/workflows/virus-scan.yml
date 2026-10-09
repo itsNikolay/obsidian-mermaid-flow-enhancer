@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Download exact published release files
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,7 +38,7 @@ jobs:
       - name: Scan downloaded release files
         env:
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
-        run: node scripts/scan-virustotal.mjs release-files
+        run: npm run scan:virustotal -- release-files
       - name: Preserve VirusTotal report
         if: always()
         uses: actions/upload-artifact@v7

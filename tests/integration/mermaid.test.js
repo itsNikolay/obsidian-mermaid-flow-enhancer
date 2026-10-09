@@ -34,7 +34,7 @@ let mermaidPath;
 test.beforeAll(async () => {
   bundlePath = path.join(os.tmpdir(), `mfe-layout-${process.pid}.js`);
   await esbuild.build({
-    entryPoints: [path.resolve(__dirname, '../../src/layout.js')],
+    entryPoints: [path.resolve(__dirname, '../../src/layout.ts')],
     bundle: true,
     platform: 'browser',
     format: 'iife',
@@ -43,7 +43,7 @@ test.beforeAll(async () => {
   });
   highlightBundlePath = path.join(os.tmpdir(), `mfe-highlight-${process.pid}.js`);
   await esbuild.build({
-    entryPoints: [path.resolve(__dirname, '../../src/highlight.js')],
+    entryPoints: [path.resolve(__dirname, '../../src/highlight.ts')],
     bundle: true,
     platform: 'browser',
     format: 'iife',

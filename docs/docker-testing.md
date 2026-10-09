@@ -33,7 +33,7 @@ The recording uses the container's virtual display and the everyday grocery-deli
 
 Inspect these artifacts before replacing the published README media. Never label Chromium-only recordings as Obsidian recordings. Failed runs may leave previous artifacts in this directory; check the command's exit status and file timestamps.
 
-The existing unit and browser suites remain available through `npm run check`. They complement the application checks: the browser suite can exercise many graph shapes quickly, while the Docker workflow checks plugin behavior in Obsidian itself.
+The existing unit and browser suites, linters, and strict TypeScript checks remain available through `npm run check`. Docker installs `tsx` and runs the TypeScript tools inside the container. They complement the application checks: the browser suite can exercise many graph shapes quickly, while the Docker workflow checks plugin behavior in Obsidian itself.
 
 ## Isolation and reproducibility
 
@@ -47,6 +47,6 @@ The existing unit and browser suites remain available through `npm run check`. T
 
 Verified on 2026-10-09 with Linux ARM64 Obsidian 1.14.4 and plugin 0.1.2 inside Docker/Colima. `docker:record` passed 20 unit tests, 14 browser integration tests, the build, and real-app checks for both themes, ancestor highlighting, and 18 centered connector endpoints. A 15.2-second MP4 (1440 × 1000, 30 fps) and GIF were generated; representative frames were visually checked. See the [capture report](assets/obsidian-capture-report.md).
 
-The legacy `node scripts/record-obsidian-demo.mjs` entry point also routes to Docker and never starts the host Obsidian app.
+The legacy `npx tsx scripts/record-obsidian-demo.mts` entry point also routes to Docker and never starts the host Obsidian app.
 
 The grocery recording has 17 nodes and 22 flowchart connections. The endpoint-center metric is diagnostic for this mixed-shape diagram; it is not a strict centered-docking guarantee for every Mermaid shape. The smaller `docker:check` fixture retains its strict centered-endpoint assertions.

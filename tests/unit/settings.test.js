@@ -6,7 +6,7 @@ Module._load = function (request, parent, isMain) {
   if (request === 'obsidian') return { PluginSettingTab: class {}, Setting: class {} };
   return originalLoad.call(this, request, parent, isMain);
 };
-const { DEFAULT_SETTINGS, normalizeSettings } = require('../../src/settings');
+const { DEFAULT_SETTINGS, normalizeSettings } = require('../../src/settings.ts');
 Module._load = originalLoad;
 
 test('normalizeSettings supplies defaults and clamps numeric settings', () => {

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { orthogonalPath, roundPath, routePoints, returnLanePath } = require('../../src/layout');
+const { orthogonalPath, roundPath, routePoints, returnLanePath } = require('../../src/layout.ts');
 
 test('orthogonalPath routes branches through the shared branch level', () => {
   assert.equal(orthogonalPath([[20, 10], [30, 30], [50, 60]], 'TD', 10, 60, 40),

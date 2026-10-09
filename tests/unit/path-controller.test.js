@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createPathController } = require('../../src/highlight');
+const { createPathController } = require('../../src/highlight.ts');
 
 function makeClassList() {
   const values = new Set();

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { ancestorPath } = require('../../src/highlight');
+const { ancestorPath } = require('../../src/highlight.ts');
 
 test('ancestorPath returns all ancestors and their edges, including cycles', () => {
   const edges = [

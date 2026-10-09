@@ -22,7 +22,7 @@ With `VIRUSTOTAL_API_KEY` set securely in your environment:
 npm run build
 npm run scan:virustotal
 # Or scan three already-downloaded published files:
-node scripts/scan-virustotal.mjs /path/to/release-files
+npx tsx scripts/scan-virustotal.mts /path/to/release-files
 ```
 
 Only regular allowlisted files up to 32 MiB are accepted; symlinks are rejected. The release manifest must identify Mermaid Flow Enhancer. JSON/Markdown reports are written to `artifacts/virustotal/`. The scanner verifies that local files still match the uploaded hashes at completion.

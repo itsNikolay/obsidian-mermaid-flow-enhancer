@@ -3,30 +3,35 @@
   "version": "0.1.2",
   "private": true,
   "scripts": {
-    "build": "node esbuild.config.mjs",
-    "test": "node --test tests/unit/*.test.js",
+    "build": "tsx esbuild.config.mts",
+    "test": "tsx --test tests/unit/*.test.js",
     "test:integration": "playwright test",
-    "check": "npm run lint && npm test && npm run test:integration && npm run build",
-    "docker:check": "node scripts/run-docker.mjs check",
-    "docker:record": "node scripts/run-docker.mjs record",
-    "scan:virustotal": "node scripts/scan-virustotal.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build",
+    "docker:check": "tsx scripts/run-docker.mts check",
+    "docker:record": "tsx scripts/run-docker.mts record",
+    "scan:virustotal": "tsx scripts/scan-virustotal.mts",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:workflows && npm run lint:shell",
     "lint:js": "eslint .",
     "lint:css": "stylelint styles.css docs/demo/demo.css",
-    "lint:workflows": "node scripts/lint-tools.mjs workflows",
-    "lint:shell": "node scripts/lint-tools.mjs shell",
-    "lint:fix": "eslint . --fix && stylelint styles.css docs/demo/demo.css --fix"
+    "lint:workflows": "tsx scripts/lint-tools.mts workflows",
+    "lint:shell": "tsx scripts/lint-tools.mts shell",
+    "lint:fix": "eslint . --fix && stylelint styles.css docs/demo/demo.css --fix",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.0",
+    "@types/node": "22.20.5",
     "esbuild": "0.25.12",
     "eslint": "10.12.0",
     "globals": "17.13.0",
     "mermaid": "12.1.0",
     "obsidian": "1.14.4",
     "stylelint": "17.16.0",
-    "stylelint-config-standard": "40.0.0"
+    "stylelint-config-standard": "40.0.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
   },
   "engines": {
     "node": ">=22.13.0"

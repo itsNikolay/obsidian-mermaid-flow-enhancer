@@ -1,23 +1,26 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import { defineConfig } from 'eslint/config';
 
-export default [
+export default defineConfig(
   { ignores: ['main.js', 'docs/demo/demo.js', 'docs/assets/**', 'artifacts/**',
     'node_modules/**', 'demo-vault/**', 'test-results/**', 'playwright-report/**'] },
-  js.configs.recommended,
-  { files: ['**/*.js', '**/*.mjs'], languageOptions: { ecmaVersion: 'latest' },
-    linterOptions: { reportUnusedDisableDirectives: 'error' },
-    rules: { 'eqeqeq': ['error', 'always', { null: 'ignore' }], 'prefer-const': 'error',
-      'no-var': 'error', 'no-throw-literal': 'error', 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }] } },
-  { files: ['src/**/*.js', 'scripts/demo-entry.js'],
-    languageOptions: { sourceType: 'commonjs', globals: { ...globals.browser, ...globals.commonjs } } },
-  { files: ['tests/**/*.js', 'playwright.config.js'],
-    languageOptions: { sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser } } },
-  { files: ['tests/integration/**/*.js'], languageOptions: { globals: {
-    mermaid: 'readonly', MPELayout: 'readonly', MPEHighlight: 'readonly', mpeController: 'readonly',
+  { files: ['**/*.js', '**/*.mjs'], extends: [js.configs.recommended],
+    languageOptions: { ecmaVersion: 'latest', globals: { ...globals.node, ...globals.browser } },
+    rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }] } },
+  { files: ['tests/**/*.js'], languageOptions: { sourceType: 'commonjs', globals: {
+    ...globals.node, ...globals.browser, mermaid: 'readonly', MPELayout: 'readonly',
+    MPEHighlight: 'readonly', mpeController: 'readonly',
   } } },
-  { files: ['**/*.mjs'], languageOptions: { sourceType: 'module', globals: globals.node } },
-  // These scripts execute callback bodies in Chromium/Obsidian via Playwright.
-  { files: ['scripts/record-demo.mjs', 'scripts/test-obsidian-docker.mjs'],
-    languageOptions: { globals: globals.browser } },
-];
+  { files: ['**/*.ts', '**/*.mts'], extends: [tseslint.configs.recommended],
+    languageOptions: { parserOptions: { projectService: true } },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+    } },
+  { files: ['**/*.{js,mjs,ts,mts}'], linterOptions: { reportUnusedDisableDirectives: 'error' },
+    rules: { eqeqeq: ['error', 'always', { null: 'ignore' }], 'prefer-const': 'error',
+      'no-var': 'error', 'no-throw-literal': 'error' } },
+);

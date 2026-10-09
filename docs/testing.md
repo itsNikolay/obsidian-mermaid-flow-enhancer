@@ -12,17 +12,18 @@ npm ci
 
 ```sh
 npm run lint
+npm run typecheck
 npm test
-npx playwright install --with-deps chromium
+npx playwright install --with-deps --only-shell chromium
 npm run test:integration
 npm run build
 ```
 
-`npm test` runs the Node test runner against `tests/unit/*.test.js`. The browser suite is run by Playwright and exercises the plugin's Mermaid output in Chromium. `npm run build` creates the distributable `main.js` at the project root. Keep generated output out of version control unless the release process explicitly attaches it.
+`npm run typecheck` validates the plugin, developer tools, and build/browser configuration using strict TypeScript with `tsc --noEmit`. `npm test` runs the Node test runner through `tsx` against `tests/unit/*.test.js`. The existing tests intentionally remain JavaScript: they exercise runtime behavior and malformed inputs that TypeScript would reject at compilation. The browser suite is run by Playwright and exercises the plugin's Mermaid output in Chromium. `npm run build` creates the distributable `main.js` at the project root. Keep generated output out of version control unless the release process explicitly attaches it.
 
-See [code linting](linting.md) for individual linters and automatic fixes. `npm run check` runs all linters, tests, and the build.
+See [code linting](linting.md) for individual linters and automatic fixes. `npm run check` runs all linters, strict type checking, tests, and the build. Plugin sources live in `src/*.ts`; developer scripts use `.ts`/`.mts` and run through `tsx`. The distributed plugin remains `main.js`, so installation files do not change.
 
-Continuous integration runs the same install, lint, test, browser setup, integration test, and build steps on pushes and pull requests. If a browser test fails locally, inspect `playwright-report/` and `test-results/` before changing expected output.
+Continuous integration runs the same install, lint, typecheck, test, browser setup, integration test, and build steps on pushes and pull requests. If a browser test fails locally, inspect `playwright-report/` and `test-results/` before changing expected output.
 
 ## Manual Obsidian check
 

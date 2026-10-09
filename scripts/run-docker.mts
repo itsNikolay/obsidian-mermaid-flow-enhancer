@@ -5,7 +5,7 @@ const mode = process.argv[2] || 'check';
 if (!['check', 'record'].includes(mode)) throw new Error('Expected check or record');
 const out = resolve('artifacts/docker');
 mkdirSync(out, { recursive: true });
-const run = args => {
+const run = (args: string[]) => {
   const result = spawnSync('docker', args, { stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status || 1);

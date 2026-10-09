@@ -1,9 +1,33 @@
-const edgeIndexes = new WeakMap();
-function resolveEdge(doc, path) {
+export type Direction = "TD" | "TB" | "BT" | "LR" | "RL";
+export type Point = [number, number];
+type Axis = 0 | 1;
+type Edge = [null, string, string];
+export interface Bounds {
+  center: Point;
+  min: Point;
+  max: Point;
+}
+export interface NodeBounds extends Bounds {
+  node: Element;
+}
+export interface LayoutSettings {
+  compactLayout?: boolean;
+  animationDuration?: number;
+}
+interface LayoutNode {
+  node: Element;
+  key: string;
+  center: Point;
+  incoming: number | undefined;
+}
+interface LayoutEdge { from: LayoutNode; to: LayoutNode; }
+
+const edgeIndexes = new WeakMap<Document, Map<string, Edge | null>>();
+function resolveEdge(doc: Document, path: Element): Edge | null {
   let index = edgeIndexes.get(doc);
   if (!index) {
     index = new Map();
-    const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1]).filter(Boolean);
+    const keys = [...doc.querySelectorAll("g.node")].map(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1]).filter((key): key is string => key !== undefined);
     for (const from of keys) for (const to of keys) {
       const prefix = `L_${from}_${to}_`;
       index.set(prefix, index.has(prefix) ? null : [null, from, to]);
@@ -15,10 +39,10 @@ function resolveEdge(doc, path) {
   return index.get(id.replace(/[^_]*$/, "")) || null;
 }
 
-function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel) {
+export function orthogonalPath(points: Point[], direction: Direction | "", sourceLimit?: number, targetLimit?: number, branchLevel?: number): string | null {
   const vertical = /^(TD|TB|BT)$/.test(direction);
   const axis = vertical ? 1 : 0;
-  const cross = 1 - axis;
+  const cross: Axis = axis === 0 ? 1 : 0;
   const first = points[0], last = points[points.length - 1];
   const sign = Math.sign(last[axis] - first[axis]);
   if (!sign) return null;
@@ -26,7 +50,7 @@ function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel
   if (sign * (b - a) <= 0) return null;
   const level = branchLevel ?? (a + b) / 2;
   const middle = sign * (level - a) > 0 && sign * (b - level) > 0 ? level : (a + b) / 2;
-  const p = [...first], q = [...last];
+  const p: Point = [...first], q: Point = [...last];
   p[axis] = middle; q[axis] = middle;
   const route = Math.abs(first[cross] - last[cross]) < 0.01
     ? [first, last] : [first, p, q, last];
@@ -34,10 +58,11 @@ function orthogonalPath(points, direction, sourceLimit, targetLimit, branchLevel
     .map((p, i) => `${i ? "L" : "M"}${p.join(",")}`).join("");
 }
 
-function transformOffset(element) {
-  const offset = [0, 0];
+function transformOffset(element: Node | null): Point | undefined {
+  const offset: Point = [0, 0];
   for (let el = element; el; el = el.parentNode) {
-    const transform = el.getAttribute?.("transform") || "";
+    const transform = "getAttribute" in el && typeof el.getAttribute === "function"
+      ? String(el.getAttribute("transform") || "") : "";
     if (!transform) continue;
     const t = transform.match(/^\s*translate\(\s*([-+\d.eE]+)(?:[,\s]+([-+\d.eE]+))?\s*\)\s*$/);
     if (!t) return undefined;
@@ -47,11 +72,11 @@ function transformOffset(element) {
   return offset;
 }
 
-function polygonHasSideCenter(points, axis, side, centerCross) {
+function polygonHasSideCenter(points: Point[], axis: Axis, side: "min" | "max", centerCross: number): boolean {
   const min = Math.min(...points.map(point => point[axis]));
   const max = Math.max(...points.map(point => point[axis]));
   const boundary = side === "min" ? min : max;
-  const close = (a, b) => Math.abs(a - b) < 0.01;
+  const close = (a: number, b: number) => Math.abs(a - b) < 0.01;
   for (let i = 0; i < points.length; i++) {
     const a = points[i], b = points[(i + 1) % points.length];
     const aa = a[axis], ba = b[axis], ac = a[1 - axis], bc = b[1 - axis];
@@ -63,24 +88,24 @@ function polygonHasSideCenter(points, axis, side, centerCross) {
   return false;
 }
 
-function nodeBounds(doc, key) {
+export function nodeBounds(doc: Document, key: string): NodeBounds | undefined {
   const node = [...doc.querySelectorAll("g.node")].find(n => n.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1] === key);
   if (!node) return undefined;
   const shape = node.querySelector("polygon, rect, circle, ellipse");
   if (!shape) return undefined;
   const offset = transformOffset(shape);
   if (!offset) return undefined;
-  let x, y;
+  let x: number[], y: number[];
   if (shape.tagName === "polygon") {
     const source = (shape.getAttribute("points") || "").trim().split(/\s+/)
       .map(point => point.split(",").map(Number));
-    if (source.length > 1 && source[0][0] === source.at(-1)[0] && source[0][1] === source.at(-1)[1]) source.pop();
+    if (source.length > 1 && source[0][0] === source.at(-1)![0] && source[0][1] === source.at(-1)![1]) source.pop();
     if (source.length < 3 || source.some(point => point.length !== 2 || !point.every(Number.isFinite))) return undefined;
     x = source.map(point => point[0]); y = source.map(point => point[1]);
-    const center = [(Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2];
-    for (const axis of [0, 1]) {
-      if (!polygonHasSideCenter(source, axis, "min", center[1 - axis]) ||
-          !polygonHasSideCenter(source, axis, "max", center[1 - axis])) return undefined;
+    const center: Point = [(Math.min(...x) + Math.max(...x)) / 2, (Math.min(...y) + Math.max(...y)) / 2];
+    for (const axis of [0, 1] as const) {
+      if (!polygonHasSideCenter(source as Point[], axis, "min", center[1 - axis]) ||
+          !polygonHasSideCenter(source as Point[], axis, "max", center[1 - axis])) return undefined;
     }
   } else if (shape.tagName === "circle") {
     const values = ["cx", "cy", "r"].map(name => shape.getAttribute(name));
@@ -101,12 +126,12 @@ function nodeBounds(doc, key) {
     if (![left, top, w, h].every(Number.isFinite) || w < 0 || h < 0) return undefined;
     x = [left, left + w]; y = [top, top + h];
   }
-  const min = [Math.min(...x) + offset[0], Math.min(...y) + offset[1]];
-  const max = [Math.max(...x) + offset[0], Math.max(...y) + offset[1]];
+  const min: Point = [Math.min(...x) + offset[0], Math.min(...y) + offset[1]];
+  const max: Point = [Math.max(...x) + offset[0], Math.max(...y) + offset[1]];
   return { node, center: [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2], min, max };
 }
 
-function nodeLimit(doc, key, direction, outgoing) {
+export function nodeLimit(doc: Document, key: string, direction: Direction | "", outgoing: boolean): number | undefined {
   const bounds = nodeBounds(doc, key);
   if (!bounds) return undefined;
   const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
@@ -114,20 +139,20 @@ function nodeLimit(doc, key, direction, outgoing) {
   return (outgoing === forward) ? bounds.max[axis] : bounds.min[axis];
 }
 
-function centerAnchor(bounds, direction, travelSign, outgoing) {
+export function centerAnchor(bounds: Bounds, direction: Direction | "", travelSign: number, outgoing: boolean): Point {
   const axis = /^(TD|TB|BT)$/.test(direction) ? 1 : 0;
-  const cross = 1 - axis;
+  const cross: Axis = axis === 0 ? 1 : 0;
   const sideSign = outgoing ? travelSign : -travelSign;
-  const anchor = [...bounds.center];
+  const anchor: Point = [...bounds.center];
   anchor[axis] = sideSign > 0 ? bounds.max[axis] : bounds.min[axis];
   anchor[cross] = bounds.center[cross];
   return anchor;
 }
 
-function returnLanePath(points, direction, from, to, offset = [0, 0]) {
+export function returnLanePath(points: Point[], direction: Direction | "", from?: Bounds, to?: Bounds, offset: Point = [0, 0]): string | null {
   const vertical = /^(TD|TB|BT)$/.test(direction);
   const axis = vertical ? 1 : 0;
-  const cross = 1 - axis;
+  const cross: Axis = axis === 0 ? 1 : 0;
   const first = points[0], last = points[points.length - 1];
   const values = points.map(point => point[cross]);
   const high = Math.max(...values), low = Math.min(...values);
@@ -136,7 +161,7 @@ function returnLanePath(points, direction, from, to, offset = [0, 0]) {
   if (lane === null) return null;
   if (!from || !to) return null;
   const outer = lane + offset[cross] > (from.center[cross] + to.center[cross]) / 2 ? "max" : "min";
-  const source = [...from.center], target = [...to.center];
+  const source: Point = [...from.center], target: Point = [...to.center];
   source[cross] = from[outer][cross];
   target[cross] = to[outer][cross];
   // Native ports can sit inside a wide block's cross-axis extent. Move the
@@ -144,7 +169,7 @@ function returnLanePath(points, direction, from, to, offset = [0, 0]) {
   const laneRoot = outer === "max"
     ? Math.max(lane + offset[cross], from.max[cross] + 16, to.max[cross] + 16)
     : Math.min(lane + offset[cross], from.min[cross] - 16, to.min[cross] - 16);
-  const bend1 = [...source], bend2 = [...target];
+  const bend1: Point = [...source], bend2: Point = [...target];
   bend1[cross] = laneRoot;
   bend2[cross] = laneRoot;
   for (const point of [source, target, bend1, bend2]) {
@@ -155,7 +180,7 @@ function returnLanePath(points, direction, from, to, offset = [0, 0]) {
     .map((point, i) => `${i ? "L" : "M"}${point.join(",")}`).join("");
 }
 
-function roundPath(d, radius = 4) {
+export function roundPath(d: string, radius = 4): string {
   const number = "[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?";
   const segment = new RegExp(`([ML])\\s*(${number})[\\s,]+(${number})`, "g");
   const matches = [...d.matchAll(segment)];
@@ -182,18 +207,18 @@ function roundPath(d, radius = 4) {
 // Mermaid may already round its orthogonal routes with quadratic corners.
 // Retain their control points when choosing an outer lane, then recompute
 // centered routes. Unsupported curve commands keep the original path.
-function routePoints(d) {
+export function routePoints(d: string): Point[] | null {
   const number = "[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?";
   const command = new RegExp(`([ML])\\s*(${number})[\\s,]+(${number})|Q\\s*(${number})[\\s,]+(${number})[\\s,]+(${number})[\\s,]+(${number})`, "g");
   const matches = [...d.matchAll(command)];
   if (!matches.length || matches[0][1] !== "M" || d.replace(command, "").trim()) return null;
   if (matches.slice(1).some(m => m[1] === "M")) return null;
-  return matches.flatMap(m => m[1] ? [[Number(m[2]), Number(m[3])]]
+  return matches.flatMap<Point>(m => m[1] ? [[Number(m[2]), Number(m[3])]]
     : [[Number(m[4]), Number(m[5])], [Number(m[6]), Number(m[7])]])
     .filter((point, i, all) => !i || point.some((v, axis) => Math.abs(v - all[i - 1][axis]) > 0.001));
 }
 
-function styleSvg(svg, direction, settings = {}) {
+export function styleSvg(svg: string, direction: Direction | "", settings: LayoutSettings = {}): string {
   const compactLayout = settings.compactLayout !== false;
   // HTML labels can contain this HTML-only entity; XML has no such entity.
   svg = svg.replace(/&nbsp;/g, "\u00a0").replace(/<br\s*>/gi, "<br/>");
@@ -206,14 +231,14 @@ function styleSvg(svg, direction, settings = {}) {
   const layoutNodes = [...doc.querySelectorAll("g.node")].map(node => {
     const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     const t = (node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/);
-    return { node, key, center: t ? [Number(t[1]), Number(t[2])] : null, incoming: key ? nodeLimit(doc, key, direction, false) : NaN };
-  }).filter(n => n.key && n.center);
+    return { node, key, center: t ? [Number(t[1]), Number(t[2])] as Point : null, incoming: key ? nodeLimit(doc, key, direction, false) : NaN };
+  }).filter((n): n is LayoutNode => !!n.key && !!n.center);
   const layoutByKey = new Map(layoutNodes.map(n => [n.key, n]));
   const layoutEdges = [...doc.querySelectorAll("path.flowchart-link, .edgePath path.path")].map(path => {
     const edge = resolveEdge(doc, path);
     if (edge) return { from: layoutByKey.get(edge[1]), to: layoutByKey.get(edge[2]) };
-  }).filter(e => e?.from && e?.to);
-  const alignedTargets = new Set();
+  }).filter((e): e is LayoutEdge => !!e?.from && !!e.to);
+  const alignedTargets = new Set<string>();
   for (const node of doc.querySelectorAll("g.node")) {
     const key = node.id.match(/(?:^|-)flowchart-(.+)-\d+$/)?.[1];
     if (key) {
@@ -234,21 +259,21 @@ function styleSvg(svg, direction, settings = {}) {
     const needed = label && widthRatio < 0.99
       ? Number(label.getAttribute("height")) / (2 * hh) / (0.99 - widthRatio) : 1;
     const scale = Math.min(1, Math.max(0.76, needed));
-    polygon.setAttribute("points", points.map(p => `${p[0]},${cy + (p[1] - cy) * scale}`).join(" "));
+    polygon!.setAttribute("points", points.map(p => `${p[0]},${cy + (p[1] - cy) * scale}`).join(" "));
   }
   for (const source of compactLayout ? layoutNodes : []) {
     const targets = [...new Set(layoutEdges.filter(e => e.from === source &&
       layoutSign * (e.to.center[layoutAxis] - source.center[layoutAxis]) > 0).map(e => e.to))];
     if (targets.length < 2) continue;
     const sameCenters = targets.every(n => Math.abs(n.center[layoutAxis] - targets[0].center[layoutAxis]) <= 2);
-    const sameIncomingSides = targets.every(n => Math.abs(n.incoming - targets[0].incoming) <= 2);
+    const sameIncomingSides = targets.every(n => Math.abs((n.incoming ?? NaN) - (targets[0].incoming ?? NaN)) <= 2);
     if (!sameCenters && !sameIncomingSides) continue;
     const limits = targets.map(n => nodeLimit(doc, n.key, direction, false));
-    if (!limits.every(Number.isFinite)) continue;
+    if (!limits.every((limit): limit is number => limit !== undefined && Number.isFinite(limit))) continue;
     const level = layoutSign > 0 ? Math.min(...limits) : Math.max(...limits);
     targets.forEach((n, i) => {
       if (alignedTargets.has(n.key)) return;
-      const delta = [0, 0];
+      const delta: Point = [0, 0];
       delta[layoutAxis] = level - limits[i];
       n.center[layoutAxis] += delta[layoutAxis];
       n.node.setAttribute("transform", `translate(${n.center.join(",")})`);
@@ -259,13 +284,13 @@ function styleSvg(svg, direction, settings = {}) {
   // actual segment (a duplicate terminal point can turn an arrow sideways).
   const number = "[-+]?(?:\\d*\\.\\d+|\\d+\\.?\\d*)(?:[eE][-+]?\\d+)?";
   const segment = new RegExp(`([ML])\\s*(${number})[\\s,]+(${number})`, "g");
-  const labelPositions = new Map();
-  const routeExtent = [];
+  const labelPositions = new Map<string, Point>();
+  const routeExtent: Point[] = [];
 
   // All forward branches from one condition share the same bend/label level.
   // Use the nearest target so neither branch crosses its destination block.
-  const branchLevels = new Map();
-  const outgoing = new Map();
+  const branchLevels = new Map<string, number>();
+  const outgoing = new Map<string, number[]>();
   const sign = /^(BT|RL)$/.test(direction) ? -1 : 1;
   for (const path of compactLayout ? doc.querySelectorAll("path.flowchart-link, .edgePath path.path") : []) {
     const edge = resolveEdge(doc, path);
@@ -274,7 +299,7 @@ function styleSvg(svg, direction, settings = {}) {
     if (!source?.querySelector("polygon")) continue;
     const a = nodeLimit(doc, edge[1], direction, true);
     const b = nodeLimit(doc, edge[2], direction, false);
-    if (!Number.isFinite(a) || !Number.isFinite(b) || sign * (b - a) <= 0) continue;
+    if (a === undefined || b === undefined || !Number.isFinite(a) || !Number.isFinite(b) || sign * (b - a) <= 0) continue;
     const levels = outgoing.get(edge[1]) || [];
     levels.push((a + b) / 2);
     outgoing.set(edge[1], levels);
@@ -297,15 +322,15 @@ function styleSvg(svg, direction, settings = {}) {
       const travelSign = Math.sign(delta);
       const pathOffset = transformOffset(path);
       if (!pathOffset) continue;
-      points[0] = centerAnchor(from, direction, travelSign, true).map((v, i) => v - pathOffset[i]);
-      points[points.length - 1] = centerAnchor(to, direction, travelSign, false).map((v, i) => v - pathOffset[i]);
+      points[0] = centerAnchor(from, direction, travelSign, true).map((v, i) => v - pathOffset[i]) as Point;
+      points[points.length - 1] = centerAnchor(to, direction, travelSign, false).map((v, i) => v - pathOffset[i]) as Point;
       const forward = sign * delta > 0;
       if (forward) {
-        const sourceLimit = nodeLimit(doc, edge[1], direction, true) - pathOffset[axis];
-        const targetLimit = nodeLimit(doc, edge[2], direction, false) - pathOffset[axis];
+        const sourceLimit = nodeLimit(doc, edge[1], direction, true)! - pathOffset[axis];
+        const targetLimit = nodeLimit(doc, edge[2], direction, false)! - pathOffset[axis];
         routed = orthogonalPath(points, direction,
           sourceLimit, targetLimit,
-          branchLevels.has(edge[1]) ? branchLevels.get(edge[1]) - pathOffset[axis] : undefined);
+          branchLevels.has(edge[1]) ? branchLevels.get(edge[1])! - pathOffset[axis] : undefined);
       } else {
         // Keep Mermaid's outer return lane and remove the small stairs.
         routed = returnLanePath(points, direction, from, to, pathOffset);
@@ -319,14 +344,14 @@ function styleSvg(svg, direction, settings = {}) {
       const offset = transformOffset(path) || [0, 0];
       labelPositions.set(path.getAttribute("data-id") || path.id,
         [(a[0] + b[0]) / 2 + offset[0], (a[1] + b[1]) / 2 + offset[1]]);
-      routeExtent.push(...route.map(point => point.map((value, axis) => value + offset[axis])));
+      routeExtent.push(...route.map(point => point.map((value, axis) => value + offset[axis]) as Point));
     }
     path.setAttribute("d", routed ? roundPath(routed) : roundPath(d));
   }
   // Mermaid places labels for its original route. Move them with our route.
   for (const label of doc.querySelectorAll(".edgeLabels > .edgeLabel")) {
     const key = label.getAttribute("data-id") || label.querySelector("[data-id]")?.getAttribute("data-id");
-    const position = labelPositions.get(key);
+    const position = key ? labelPositions.get(key) : undefined;
     const offset = transformOffset(label.parentNode);
     if (position && offset) label.setAttribute("transform",
       `translate(${position.map((value, axis) => value - offset[axis]).join(",")})`);
@@ -342,7 +367,7 @@ function styleSvg(svg, direction, settings = {}) {
   }
   // A centered return port can need a slightly wider outer lane. Include that
   // lane in the SVG canvas instead of clipping its line or arrow at the edge.
-  const root = doc.documentElement;
+  const root = doc.documentElement as unknown as SVGSVGElement;
   const viewBox = (root.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
   if (routeExtent.length && viewBox.length === 4 && viewBox.every(Number.isFinite)) {
     const [x, y, width, height] = viewBox;
@@ -352,14 +377,14 @@ function styleSvg(svg, direction, settings = {}) {
     const bottom = Math.max(y + height, ...routeExtent.map(p => p[1] + 4));
     const sizes = [right - left, bottom - top];
     root.setAttribute("viewBox", `${left} ${top} ${sizes.join(" ")}`);
-    for (const [name, size] of [["width", sizes[0]], ["height", sizes[1]]]) {
+    for (const [name, size] of [["width", sizes[0]], ["height", sizes[1]]] as const) {
       if (/^[\d.]+$/.test(root.getAttribute(name) || "")) root.setAttribute(name, String(size));
     }
     if (Math.abs(parseFloat(root.style.maxWidth) - width) < 1) root.style.maxWidth = `${sizes[0]}px`;
   }
   const hierarchyNodes = [...doc.querySelectorAll("g.node[data-mpe-key]")];
   const axis = /^(TD|TB|BT)$/.test(direction) ? 2 : 1;
-  const position = node => Number((node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/)?.[axis]);
+  const position = (node: Element) => Number((node.getAttribute("transform") || "").match(/translate\(\s*([-\d.eE]+)[,\s]+([-\d.eE]+)\s*\)/)?.[axis]);
   const hierarchyByKey = new Map(hierarchyNodes.map(n => [n.getAttribute("data-mpe-key"), n]));
   for (const path of doc.querySelectorAll("path.flowchart-link, .edgePath path.path")) {
     const edge = resolveEdge(doc, path);
@@ -387,11 +412,11 @@ function styleSvg(svg, direction, settings = {}) {
     }
   }
   doc.documentElement.classList.add("mfe-enhanced");
-  doc.documentElement.style.setProperty("--mpe-duration", `${settings.animationDuration ?? 450}ms`);
+  root.style.setProperty("--mpe-duration", `${settings.animationDuration ?? 450}ms`);
   return new XMLSerializer().serializeToString(doc.documentElement);
 }
 
-function widenSingleRectangles(source, svg, direction) {
+export function widenSingleRectangles(source: string, svg: string, direction: Direction | ""): string {
   if (!/^(TD|TB|BT)$/.test(direction)) return source;
   const doc = new DOMParser().parseFromString(svg.replace(/<br\s*>/gi, "<br/>"), "image/svg+xml");
   const nodes = [...doc.querySelectorAll("g.node")].map(node => {
@@ -409,7 +434,7 @@ function widenSingleRectangles(source, svg, direction) {
   });
 }
 
-function wrapDecisions(source) {
+export function wrapDecisions(source: string): string {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (!context) return source;
@@ -417,7 +442,7 @@ function wrapDecisions(source) {
   return source.replace(/([\p{L}\p{N}_-]+)\{"([^"\n]+)"\}/gu, (whole, key, label) => {
     if (/[<>&`]/.test(label) || context.measureText(label).width <= 100) return whole;
     const words = label.split(/\s+/);
-    const lines = [];
+    const lines: string[] = [];
     let line = "";
     for (const word of words) {
       const next = line ? `${line} ${word}` : word;
@@ -431,4 +456,3 @@ function wrapDecisions(source) {
 }
 
 
-module.exports = { routePoints, orthogonalPath, roundPath, nodeLimit, nodeBounds, centerAnchor, returnLanePath, styleSvg, widenSingleRectangles, wrapDecisions };

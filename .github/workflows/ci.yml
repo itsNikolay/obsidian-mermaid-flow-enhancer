@@ -24,8 +24,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: node_modules/.cache/lint-tools
-          key: ${{ runner.os }}-${{ runner.arch }}-lint-tools-${{ hashFiles('scripts/lint-tools.mjs') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-lint-tools-${{ hashFiles('scripts/lint-tools.mts') }}
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       - name: Read Playwright version
         id: playwright-version

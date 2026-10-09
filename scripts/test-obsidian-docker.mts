@@ -1,4 +1,7 @@
-import { chromium } from 'playwright';
+import { chromium, type Browser, type Page } from 'playwright';
+import type { ChildProcessByStdio } from 'node:child_process';
+import type { Readable, Writable } from 'node:stream';
+import type { TFile } from 'obsidian';
 import { mkdir, writeFile, copyFile, readFile } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -17,11 +20,15 @@ await writeFile(`${vault}/.obsidian/app.json`, JSON.stringify({ safeMode: false,
 await writeFile(`${profile}/obsidian.json`, JSON.stringify({ vaults: { demo: { path: vault, ts: Date.now(), open: true } } }));
 await writeFile(`${vault}/Demo.md`, `# Mermaid Flow Enhancer\n\nSynthetic Docker demonstration — no personal notes.\n\n\`\`\`mermaid\nflowchart LR\nrequest[Request] --> triage[Triage]\ntriage --> ready{Ready to build?}\nready -->|No| clarify[Clarify details]\nclarify --> triage\nready -->|Yes| build[Build change]\nbuild --> checks{Checks pass?}\nchecks -->|No| build\nchecks -->|Yes| release[Release]\nrelease --> done((Complete))\n\`\`\`\n`);
 if (record) await copyFile('demo-vault/Examples/grocery-delivery.md', `${vault}/Demo.md`);
-const errors = [];
-let app, browser, page, recorder, recorderDone, failure;
+const errors: string[] = [];
+let app: ChildProcessByStdio<null, null, Readable> | undefined;
+let browser: Browser | undefined, page: Page | undefined;
+let recorder: ChildProcessByStdio<Writable, null, Readable> | undefined;
+type RecorderOutcome = { error?: Error; code?: number | null };
+let recorderDone: Promise<RecorderOutcome> | undefined, failure: unknown;
 let recorderLog = "";
 try {
-  app = spawn(process.env.OBSIDIAN_EXECUTABLE, ['--no-sandbox', '--disable-gpu',
+  app = spawn(process.env.OBSIDIAN_EXECUTABLE || '/opt/squashfs-root/obsidian', ['--no-sandbox', '--disable-gpu',
     '--remote-debugging-port=9222', `--user-data-dir=${profile}`], { stdio: ['ignore', 'ignore', 'pipe'] });
   let appLog = '';
   app.stderr.on('data', chunk => { appLog = (appLog + chunk).slice(-8000); });
@@ -49,15 +56,17 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.waitForFunction(() => globalThis.app?.vault?.getName() === 'mfe-vault', null, { timeout: 60000 });
   await page.evaluate(async () => {
-    await app.plugins.enablePluginAndSave('mermaid-flow-enhancer');
-    const leaf = app.workspace.getLeaf(false);
-    await leaf.openFile(app.vault.getAbstractFileByPath('Demo.md'));
+    await globalThis.app.plugins.enablePluginAndSave('mermaid-flow-enhancer');
+    const leaf = globalThis.app.workspace.getLeaf(false);
+    const file = globalThis.app.vault.getAbstractFileByPath('Demo.md');
+    if (!file || !('extension' in file)) throw new Error('Demo markdown file is missing');
+    await leaf.openFile(file as TFile);
     await leaf.setViewState({ type: 'markdown', state: { file: 'Demo.md', mode: 'preview' } });
   });
   await page.getByRole('button', { name: 'Allow', exact: true }).first().click({ timeout: 15000 });
   await page.evaluate(() => {
-    app.workspace.leftSplit.collapse();
-    app.workspace.rightSplit.collapse();
+    globalThis.app.workspace.leftSplit.collapse();
+    globalThis.app.workspace.rightSplit.collapse();
   });
   // CDP screenshots omit native popups; bring the main X11 window above them.
   await page.bringToFront();
@@ -68,17 +77,17 @@ try {
   const expectedNodes = record ? 17 : 8;
   assert.equal(await svg.locator('.node').count(), expectedNodes);
   const geometry = await svg.evaluate(svg => {
-    const nodes = new Map([...svg.querySelectorAll('.node[data-mpe-key]')].map(n =>
-      [n.dataset.mpeKey, n.querySelector('rect,polygon,circle,ellipse').getBoundingClientRect()]));
-    const errors = [...svg.querySelectorAll('path.flowchart-link[data-mpe-from]')].flatMap(path => {
-      const point = length => path.getPointAtLength(length).matrixTransform(path.getScreenCTM());
-      const distance = (p, r) => Math.min(
+    const nodes = new Map([...svg.querySelectorAll<SVGGElement>('.node[data-mpe-key]')].map(n =>
+      [n.dataset.mpeKey, n.querySelector('rect,polygon,circle,ellipse')!.getBoundingClientRect()]));
+    const errors = [...svg.querySelectorAll<SVGPathElement>('path.flowchart-link[data-mpe-from]')].flatMap(path => {
+      const point = (length: number) => path.getPointAtLength(length).matrixTransform(path.getScreenCTM() ?? undefined);
+      const distance = (p: DOMPoint, r: DOMRect) => Math.min(
         Math.hypot(p.x-r.left, p.y-(r.top+r.height/2)),
         Math.hypot(p.x-r.right, p.y-(r.top+r.height/2)),
         Math.hypot(p.x-(r.left+r.width/2), p.y-r.top),
         Math.hypot(p.x-(r.left+r.width/2), p.y-r.bottom));
-      return [distance(point(0), nodes.get(path.dataset.mpeFrom)),
-        distance(point(path.getTotalLength()), nodes.get(path.dataset.mpeTo))];
+      return [distance(point(0), nodes.get(path.dataset.mpeFrom)!),
+        distance(point(path.getTotalLength()), nodes.get(path.dataset.mpeTo)!)];
     });
     return { endpoints: errors.length, maxError: Math.max(...errors) };
   });
@@ -97,9 +106,9 @@ try {
     recorder = spawn('ffmpeg', ['-y', '-f', 'x11grab', '-video_size', '1440x1000', '-framerate', '30',
       '-i', ':99', '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', `${out}/obsidian-demo.mp4`], { stdio: ['pipe', 'ignore', 'pipe'] });
     recorder.stderr.on('data', chunk => { recorderLog = (recorderLog + chunk).slice(-8000); });
-    recorderDone = new Promise(resolve => {
-      recorder.once('error', error => resolve({ error }));
-      recorder.once('exit', code => resolve({ code }));
+    recorderDone = new Promise<RecorderOutcome>(resolve => {
+      recorder!.once('error', error => resolve({ error }));
+      recorder!.once('exit', code => resolve({ code }));
     });
   }
   const palettes = [];
@@ -107,7 +116,7 @@ try {
     const dark = theme === 'obsidian';
     await page.evaluate(dark => {
       if (document.body.classList.contains('theme-dark') !== dark)
-        app.commands.executeCommandById('theme:toggle-light-dark');
+        globalThis.app.commands.executeCommandById('theme:toggle-light-dark');
     }, dark);
     await page.waitForTimeout(700);
     assert.equal(await page.evaluate(() => document.body.classList.contains('theme-dark')), dark);
@@ -119,7 +128,7 @@ try {
     if (!record) {
       await release.hover();
       await page.waitForTimeout(900);
-      assert.match(await request.getAttribute('class'), /mpe-on-path/);
+      assert.match((await request.getAttribute('class')) ?? '', /mpe-on-path/);
       assert.equal(await svg.evaluate(el => el.classList.contains('mpe-tracing')), true);
     }
     for (const key of (record ? ['list', 'stock', 'replace', 'address', 'slot', 'paid', 'retry', 'order', 'courier', 'notice', 'home', 'check', 'done'] : ['request', 'triage', 'ready', 'build', 'checks', 'release', 'done'])) {
@@ -128,15 +137,16 @@ try {
       assert.equal(spawnSync('xdotool', ['mousemove', '--sync', ...point.map(String)]).status, 0);
       await node.hover();
       await page.waitForTimeout(record ? 1100 : 650);
-      assert.match(await node.getAttribute('class'), /mpe-on-path/);
-      if (record && key === 'done') assert.match(await request.getAttribute('class'), /mpe-on-path/);
+      assert.match((await node.getAttribute('class')) ?? '', /mpe-on-path/);
+      if (record && key === 'done') assert.match((await request.getAttribute('class')) ?? '', /mpe-on-path/);
     }
     if (record) {
       const edge = svg.locator('path.flowchart-link[data-mpe-to="courier"]');
       await edge.scrollIntoViewIfNeeded();
-      const edgePoint = await edge.evaluate(el => {
-        const p = el.getPointAtLength(el.getTotalLength() * 0.3).matrixTransform(el.getScreenCTM());
-        return [p.x, p.y];
+      const edgePoint = await edge.evaluate(element => {
+        const el = element as SVGPathElement;
+        const p = el.getPointAtLength(el.getTotalLength() * 0.3).matrixTransform(el.getScreenCTM() ?? undefined);
+        return [p.x, p.y] as const;
       });
       await page.mouse.move(...edgePoint);
       await page.waitForTimeout(1400);
@@ -156,8 +166,8 @@ try {
 } finally {
   if (recorder) {
     if (recorder.exitCode === null && !recorder.killed) recorder.stdin.end('q');
-    let timer;
-    const outcome = await Promise.race([recorderDone, new Promise(resolve => { timer = setTimeout(() => { recorder.kill('SIGKILL'); resolve({ error: new Error('ffmpeg shutdown timed out') }); }, 15000); })]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const outcome = await Promise.race([recorderDone!, new Promise<RecorderOutcome>(resolve => { timer = setTimeout(() => { recorder!.kill('SIGKILL'); resolve({ error: new Error('ffmpeg shutdown timed out') }); }, 15000); })]);
     clearTimeout(timer);
     if (outcome.error || outcome.code !== 0) failure ??= new Error(`ffmpeg recording failed: ${outcome.error || outcome.code}\n${recorderLog}`);
   }

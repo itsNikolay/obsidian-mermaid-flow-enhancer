@@ -1,4 +1,5 @@
-import { createRequire } from "node:module";
+import * as esbuild from "esbuild";
+import { chromium } from "playwright";
 import { readFile, mkdir, stat, unlink, writeFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,15 +7,13 @@ import { spawn } from "node:child_process";
 
 const here = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const packageRoot = here;
-const require = createRequire(join(packageRoot, "package.json"));
-const esbuild = require("esbuild");
-const { chromium } = require("playwright");
+
 const out = join(here, "docs/assets");
 const generated = join(here, "docs/demo/demo.js");
 const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || chromium.executablePath();
 await mkdir(out, { recursive: true });
 for (const file of await readdir(out)) if (file.endsWith(".webm")) await unlink(join(out, file));
-await esbuild.build({ entryPoints: [join(here, "scripts/demo-entry.js")], outfile: generated,
+await esbuild.build({ entryPoints: [join(here, "scripts/demo-entry.ts")], outfile: generated,
   bundle: true, platform: "browser", format: "iife", target: "chrome120",
   nodePaths: [join(packageRoot, "node_modules")],
   loader: { ".css": "text" }, define: { "process.env.NODE_ENV": '"production"' },
@@ -25,7 +24,7 @@ const browser = await chromium.launch({ headless: true,
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1,
   recordVideo: { dir: out, size: { width: 1440, height: 1000 } } });
 const page = await context.newPage();
-const browserErrors = [];
+const browserErrors: string[] = [];
 page.on("pageerror", e => { browserErrors.push(e.message); console.error("browser error:", e.message); });
 page.on("console", m => { if (m.type() === "error") console.error("browser console:", m.text()); });
 const demoCss = await readFile(join(here, "docs/demo/demo.css"), "utf8");
@@ -38,11 +37,11 @@ await page.waitForSelector("svg.mfe-enhanced g.node", { timeout: 5000 });
 await page.waitForTimeout(1200);
 console.log("diagram bounds:", await page.evaluate(() => {
   const svg = document.querySelector("svg.mfe-enhanced"), node = svg?.querySelector("g.node");
-  const box = el => { const r = el?.getBoundingClientRect(); return r && [r.x, r.y, r.width, r.height]; };
+  const box = (el: Element | null | undefined) => { const r = el?.getBoundingClientRect(); return r && [r.x, r.y, r.width, r.height]; };
   return { svg: box(svg), node: box(node), svgWidth: svg?.getAttribute("width"), svgHeight: svg?.getAttribute("height"), viewBox: svg?.getAttribute("viewBox"), nodes: svg?.querySelectorAll("g.node").length };
 }));
 
-const atNode = async key => {
+const atNode = async (key: string) => {
   const el = page.locator(`svg.mfe-enhanced g.node[data-mpe-key='${key}']`);
   await el.hover({ force: true }); await page.waitForTimeout(950);
 };
@@ -70,11 +69,11 @@ await writeFile(join(out, "browser-preview-performance.md"), [
   ...perf.map(p => `| ${p.nodes} | ${p.edges} | ${p.renderAndEnhanceMs} | ${p.svgBytes} |`),
   ""
 ].join("\n"));
-const videoPath = await page.video().path();
+const videoPath = await page.video()!.path();
 await context.close();
 
-function run(command, args) {
-  return new Promise((ok, fail) => {
+function run(command: string, args: string[]) {
+  return new Promise<void>((ok, fail) => {
     const child = spawn(command, args, { stdio: "inherit" });
     child.on("error", fail); child.on("exit", code => code === 0 ? ok() : fail(new Error(`${command} exited ${code}`)));
   });

@@ -1,12 +1,38 @@
-function ancestorPath(edges, target) {
-  const nodes = new Set([target]), selected = new Set(), pending = [target];
-  const incoming = new Map();
+import type { EnhancerSettings } from './settings';
+
+export interface PathEdge {
+  from: string;
+  to: string;
+  id: string;
+  forward?: boolean;
+}
+
+export interface AncestorPath {
+  nodes: Set<string>;
+  edges: Set<string>;
+}
+
+type TimerHandle = ReturnType<typeof setTimeout> | number;
+export interface PathTimers {
+  setTimeout(callback: () => void, delay: number): TimerHandle;
+  clearTimeout(handle: TimerHandle): void;
+}
+
+export interface PathController {
+  enter(event: Event): void;
+  leave(event: Event): void;
+  dispose(): void;
+}
+
+export function ancestorPath(edges: readonly PathEdge[], target: string): AncestorPath {
+  const nodes = new Set([target]), selected = new Set<string>(), pending = [target];
+  const incoming = new Map<string, PathEdge[]>();
   for (const edge of edges) {
     if (!incoming.has(edge.to)) incoming.set(edge.to, []);
-    incoming.get(edge.to).push(edge);
+    incoming.get(edge.to)!.push(edge);
   }
   while (pending.length) {
-    const key = pending.pop();
+    const key = pending.pop()!;
     for (const edge of incoming.get(key) || []) {
       selected.add(edge.id);
       if (!nodes.has(edge.from)) { nodes.add(edge.from); pending.push(edge.from); }
@@ -15,18 +41,18 @@ function ancestorPath(edges, target) {
   return { nodes, edges: selected };
 }
 
-function highlightAncestors(element) {
+export function highlightAncestors(element: Element): void {
   const svg = element.closest("svg");
   if (!svg) return;
   const paths = [...svg.querySelectorAll("[data-mpe-from][data-mpe-to]")];
-  const edges = paths.map(path => ({ from: path.getAttribute("data-mpe-from"),
-    to: path.getAttribute("data-mpe-to"), id: path.getAttribute("data-id") || path.id,
+  const edges = paths.map(path => ({ from: path.getAttribute("data-mpe-from")!,
+    to: path.getAttribute("data-mpe-to")!, id: path.getAttribute("data-id") || path.id,
     forward: path.getAttribute("data-mpe-forward") === "true" }));
   const key = element.getAttribute("data-mpe-key");
   const id = element.getAttribute("data-id") || element.querySelector("[data-id]")?.getAttribute("data-id") || element.id;
   const edge = key ? null : edges.find(edge => edge.id === id);
   if (!key && !edge) return;
-  const selected = ancestorPath(edges.filter(edge => edge.forward), key || edge.from);
+  const selected = ancestorPath(edges.filter(edge => edge.forward), key || edge!.from);
   if (edge) { selected.nodes.add(edge.to); selected.edges.add(edge.id); }
   svg.classList.add("mpe-tracing");
   for (const el of svg.querySelectorAll(".node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel")) {
@@ -37,27 +63,37 @@ function highlightAncestors(element) {
 }
 
 
-function createPathController(document, getSettings, timers = { setTimeout: (fn, delay) => setTimeout(fn, delay), clearTimeout: id => clearTimeout(id) }) {
+export function createPathController(
+  document: Pick<Document, 'querySelectorAll'>,
+  getSettings: () => Pick<EnhancerSettings, 'pathHighlight' | 'hoverDelay'>,
+  timers: PathTimers = { setTimeout: (fn, delay) => setTimeout(fn, delay), clearTimeout: id => clearTimeout(id) }
+): PathController {
   const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel";
-  const pending = new Map();
+  const pending = new Map<Element, TimerHandle>();
   let disposed = false;
-  const cancel = svg => { timers.clearTimeout(pending.get(svg)); pending.delete(svg); };
-  const reset = svg => {
+  const cancel = (svg: Element) => {
+    const timer = pending.get(svg);
+    if (timer !== undefined) timers.clearTimeout(timer);
+    pending.delete(svg);
+  };
+  const reset = (svg: Element) => {
     svg.classList.remove("mpe-tracing");
     svg.querySelectorAll(".mpe-on-path").forEach(el => el.classList.remove("mpe-on-path"));
   };
   return {
     enter(event) {
       if (disposed || !getSettings().pathHighlight) return;
-      const node = event.target.closest?.(target);
+      const node = (event.target as Element | null)?.closest?.(target);
       if (!node) return;
-      cancel(node.closest("svg"));
+      const svg = node.closest("svg");
+      if (!svg) return;
+      cancel(svg);
       highlightAncestors(node);
     },
     leave(event) {
       if (disposed) return;
-      const node = event.target.closest?.(target);
-      if (!node || node.contains(event.relatedTarget)) return;
+      const node = (event.target as Element | null)?.closest?.(target);
+      if (!node || node.contains((event as MouseEvent | FocusEvent).relatedTarget as Node | null)) return;
       const svg = node.closest("svg");
       if (!svg) return;
       cancel(svg);
@@ -74,4 +110,3 @@ function createPathController(document, getSettings, timers = { setTimeout: (fn,
     }
   };
 }
-module.exports = { ancestorPath, highlightAncestors, createPathController };
