@@ -28,7 +28,7 @@ The plugin wraps Mermaid's render function and adjusts the generated SVG. It doe
 ## Requirements
 
 - Obsidian 1.14.2 or later (the conservative minimum declared in the plugin manifest).
-- Desktop and mobile are declared as supported by the manifest; beta testing across devices is pending.
+- The plugin uses browser APIs and does not require desktop-only Node.js/Electron APIs. Mobile verification is pending; the manifest leaves `isDesktopOnly` disabled.
 
 The plugin runs locally without telemetry or network requests. No additional service or account is required. Development and downloading releases require network access.
 

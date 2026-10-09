@@ -30,4 +30,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes
+        run: |
+          if [[ "$RELEASE_TAG" == 0.* ]]; then
+            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes --prerelease
+          else
+            gh release create "$RELEASE_TAG" main.js manifest.json styles.css --generate-notes
+          fi
