@@ -12,7 +12,7 @@ const defaults = {
 };
 
 const { styleSvg, widenSingleRectangles, wrapDecisions } = require("./layout");
-const { highlightAncestors } = require("./highlight");
+const { createPathController } = require("./highlight");
 const { normalizeSettings, EnhancerSettingsTab } = require("./settings");
 
 module.exports = class MermaidPreviewEnhanced extends Plugin {
@@ -21,41 +21,12 @@ module.exports = class MermaidPreviewEnhanced extends Plugin {
     this.settings = normalizeSettings(await this.loadData());
     if (this.stopped) return;
     this.addSettingTab(new EnhancerSettingsTab(this.app, this));
-    const hoverTarget = ".mermaid .node, .mermaid .flowchart-link, .mermaid .edgePath path.path, .mermaid .edgeLabels > .edgeLabel";
-    const pendingClears = new Map();
-    const cancelClear = svg => {
-      clearTimeout(pendingClears.get(svg));
-      pendingClears.delete(svg);
-    };
-    const enter = event => {
-      const node = event.target.closest?.(hoverTarget);
-      if (!node || !this.settings.pathHighlight) return;
-      cancelClear(node.closest("svg"));
-      highlightAncestors(node);
-    };
-    const leave = event => {
-      const node = event.target.closest?.(hoverTarget);
-      if (!node || node.contains(event.relatedTarget)) return;
-      const svg = node.closest("svg");
-      if (!svg) return;
-      cancelClear(svg);
-      // Keep the current path while the pointer crosses a gap between nodes.
-      // Entering the next node cancels this reset and transitions directly.
-      pendingClears.set(svg, setTimeout(() => {
-        pendingClears.delete(svg);
-        svg.classList.remove("mpe-tracing");
-        svg.querySelectorAll(".mpe-on-path").forEach(el => el.classList.remove("mpe-on-path"));
-      }, this.settings.hoverDelay));
-    };
-    this.registerDomEvent(document, "pointerover", enter);
-    this.registerDomEvent(document, "pointerout", leave);
-    this.registerDomEvent(document, "focusin", enter);
-    this.registerDomEvent(document, "focusout", leave);
-    this.register(() => {
-      pendingClears.forEach(timer => clearTimeout(timer));
-      pendingClears.clear();
-    });
-    this.register(() => document.querySelectorAll(".mpe-tracing, .mpe-on-path").forEach(el => el.classList.remove("mpe-tracing", "mpe-on-path")));
+    const controller = createPathController(document, () => this.settings);
+    this.registerDomEvent(document, "pointerover", controller.enter);
+    this.registerDomEvent(document, "pointerout", controller.leave);
+    this.registerDomEvent(document, "focusin", controller.enter);
+    this.registerDomEvent(document, "focusout", controller.leave);
+    this.register(controller.dispose);
     const mermaid = await loadMermaid();
     if (this.stopped) return;
     const original = mermaid.render;

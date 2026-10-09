@@ -37,4 +37,41 @@ function highlightAncestors(element) {
 }
 
 
-module.exports = { ancestorPath, highlightAncestors };
+function createPathController(document, getSettings, timers = { setTimeout, clearTimeout }) {
+  const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel";
+  const pending = new Map();
+  let disposed = false;
+  const cancel = svg => { timers.clearTimeout(pending.get(svg)); pending.delete(svg); };
+  const reset = svg => {
+    svg.classList.remove("mpe-tracing");
+    svg.querySelectorAll(".mpe-on-path").forEach(el => el.classList.remove("mpe-on-path"));
+  };
+  return {
+    enter(event) {
+      if (disposed || !getSettings().pathHighlight) return;
+      const node = event.target.closest?.(target);
+      if (!node) return;
+      cancel(node.closest("svg"));
+      highlightAncestors(node);
+    },
+    leave(event) {
+      if (disposed) return;
+      const node = event.target.closest?.(target);
+      if (!node || node.contains(event.relatedTarget)) return;
+      const svg = node.closest("svg");
+      if (!svg) return;
+      cancel(svg);
+      pending.set(svg, timers.setTimeout(() => {
+        pending.delete(svg);
+        reset(svg);
+      }, getSettings().hoverDelay));
+    },
+    dispose() {
+      disposed = true;
+      pending.forEach(timer => timers.clearTimeout(timer));
+      pending.clear();
+      document.querySelectorAll("svg.mfe-enhanced").forEach(reset);
+    }
+  };
+}
+module.exports = { ancestorPath, highlightAncestors, createPathController };
