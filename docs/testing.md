@@ -43,3 +43,9 @@ The plugin was enabled in a clean Obsidian 1.14.2 vault on macOS. Its settings a
 The directory completed its 0.1.0 release scan without errors and reproduced `main.js` byte-for-byte. Its CSS warnings identified `:has()` and `!important`; its release recommendation requested artifact attestations. Version 0.1.1 removes `:has()` by scoping directly to enhanced SVG roots and adds GitHub provenance attestations. Scoped `!important` remains necessary to override Mermaid’s generated SVG ID rules and Obsidian’s native dark filter.
 
 For 0.1.1, 17 unit tests and 12 Chromium tests pass. The additional browser test checks actual faded opacity and highlighted strokes, including isolation from regular Mermaid SVGs.
+
+## CI caches
+
+CI and release jobs cache npm downloads (through setup-node), pinned native linters, and Playwright's Chromium headless shell. Linter caches are restored after `npm ci` and keyed by the installer file; browser caches are keyed by OS, architecture, pinned Ubuntu image family, and the installed Playwright version. No fallback keys restore tools from another version. Cache misses download the required tools normally.
+
+Only headless Chromium is downloaded for CI. Linux system libraries are still installed/checked on every job; browser caches do not contain those libraries. Tests and builds always run, including on cache hits. The CI concurrency group cancels obsolete runs on the same ref when a newer commit arrives; it does not cancel release scans.

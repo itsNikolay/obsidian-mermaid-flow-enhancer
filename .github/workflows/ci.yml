@@ -4,9 +4,14 @@ on:
   push:
   pull_request:
 
+# A newer push replaces obsolete checks on the same branch; releases are unaffected.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -14,8 +19,24 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # npm ci clears node_modules, so restore native tools after installation.
+      - name: Cache native linters
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.cache/lint-tools
+          key: ${{ runner.os }}-${{ runner.arch }}-lint-tools-${{ hashFiles('scripts/lint-tools.mjs') }}
       - run: npm run lint
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+      - name: Read Playwright version
+        id: playwright-version
+        run: node -e 'console.log("version=" + require("playwright/package.json").version)' >> "$GITHUB_OUTPUT"
+      - name: Cache Chromium headless shell
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-${{ runner.arch }}-ubuntu24-playwright-shell-${{ steps.playwright-version.outputs.version }}
+      # Linux libraries are runner-specific and cannot be restored with the browser.
+      - name: Install Chromium headless shell and system dependencies
+        run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:integration
       - run: npm run build
