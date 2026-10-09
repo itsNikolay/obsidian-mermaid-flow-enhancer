@@ -6,6 +6,8 @@ An **Obsidian Mermaid plugin** for readable Markdown flowcharts: compact diagram
 
 The button opens the official plugin installation page. Choose **Add to Obsidian**, then **Install** and **Enable** in the app.
 
+[Join the discussion on the Obsidian Forum](https://forum.obsidian.md/t/mermaid-flow-enhancer-compact-flowcharts-with-interactive-path-highlighting/119247) — share your diagrams, suggest improvements, or report bugs.
+
 **Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
 
 ## Preview
