@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" class="theme-dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mermaid Flow Enhancer — browser preview</title>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body class="theme-dark">
+  <main>
+    <header class="topbar">
+      <div class="brand"><span class="mark">M</span><span>Mermaid Flow Enhancer</span></div>
+      <div class="preview-label">BROWSER PREVIEW · NOT AN OBSIDIAN RECORDING</div>
+      <div class="controls"><button id="theme">Switch to light</button><button id="compact">Compact nodes: on</button></div>
+    </header>
+    <section class="intro">
+      <div class="eyebrow">INTERACTIVE PREVIEW</div>
+      <h1>Follow the path.<br><span>Keep the flow in view.</span></h1>
+      <p>Hover over a step to trace its incoming route. Move between steps to keep the highlight; leave the diagram to let it fade away.</p>
+    </section>
+    <section class="canvas-card">
+      <div class="card-head"><div><strong>Release workflow</strong><small>Mermaid flowchart · browser preview</small></div><span class="live"><i></i>Interactive</span></div>
+      <div class="mermaid" id="diagram"></div>
+      <div class="card-foot"><span>↖ Hover or focus any node</span><span>Reset delay · 180 ms</span></div>
+    </section>
+    <footer>Visual behavior preview. Actual rendering can vary with Obsidian theme and Mermaid version.</footer>
+  </main>
+  <script src="demo.js"></script>
+</body>
+</html>
