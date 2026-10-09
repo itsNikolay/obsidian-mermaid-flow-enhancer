@@ -53,3 +53,11 @@ The official 0.1.2 directory review completed and made 0.1.2 the current release
 - Missing key, API errors, empty results, and timeouts block publication. See [setup and status](virus-scanning.md).
 
 VirusTotal baseline: release 0.1.2 completed the [real API scan](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37963960312) on 2026-10-09, with 0/60, 0/61, and 0/56 completed-engine detections. All three hashes matched independent release downloads; both reports are attached to the release. [Full statistics](security/virustotal-0.1.2.json) preserve engine failures/timeouts/unsupported results. All 48 tests and build passed locally and in GitHub CI.
+
+## 1.0.0 release verification
+
+[Release 1.0.0](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/releases/tag/1.0.0) was published on 2026-10-09 without the beta designation. Its [workflow](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/37971215293) passed all linters, strict TypeScript checking, 34 unit tests, 14 Chromium integration tests, the build, VirusTotal, and GitHub artifact attestations. All three downloaded plugin files match the tested local build byte-for-byte. Independent attestation verification succeeded for JavaScript and CSS.
+
+Real Obsidian 1.14.4/Linux inside Docker passed with plugin 1.0.0, both light and dark palettes, eight fixture nodes, and 18 connector endpoints with zero side-center error. No host desktop application or personal vault was used. [VirusTotal statistics](security/virustotal-1.0.0.json) record 0/59, 0/60, and 0/61 detections for JavaScript, manifest, and CSS respectively.
+
+The official directory review completed and promoted 1.0.0 to the current public version. It reproduced `main.js` byte-for-byte and verified both attestations. The `!important` CSS warning is resolved. The review has non-blocking source warnings about timer window compatibility, inferred DOM typing, unbound methods, Obsidian element helpers, and searchable settings, plus recommendations about the deprecated slider tooltip and attached antivirus reports. These findings are follow-up work, not claims of completed fixes. Mobile verification and external user feedback remain pending. The public listing description no longer labels the plugin beta.
