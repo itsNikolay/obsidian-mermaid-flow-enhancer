@@ -4,7 +4,7 @@ Make Mermaid flowcharts easier to scan in Obsidian with compact node spacing, al
 
 **Mermaid Flow Enhancer** is the plugin name. “Obsidian” describes the platform it extends; this is an independent project and is not affiliated with or endorsed by Obsidian.
 
-> **Beta:** This plugin is under active development. External user testing is pending. The [Community directory listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) is published; installation awaits automated review. Please report issues with a small Mermaid example and your Obsidian version.
+> **Beta:** This plugin is under active development. External user testing is pending. The [Community directory listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) is published with an active Add to Obsidian link. The initial scan completed; catalogue installation in the desktop app is still being verified. Please report issues with a small Mermaid example and your Obsidian version.
 
 ## Preview
 
@@ -35,6 +35,10 @@ The plugin wraps Mermaid's render function and adjusts the generated SVG. It doe
 The plugin runs locally without telemetry or network requests. No additional service or account is required. Development and downloading releases require network access.
 
 ## Install
+
+### From the community directory
+
+Open the [Mermaid Flow Enhancer listing](https://community.obsidian.md/plugins/mermaid-flow-enhancer) and choose **Add to Obsidian**, then install and enable the plugin. If your app does not find the newly published listing yet, use the release installation below.
 
 ### From a release
 
