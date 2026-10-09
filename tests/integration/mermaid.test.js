@@ -62,6 +62,8 @@ test.afterAll(async () => {
 
 async function setup(page) {
   await page.setContent('<!doctype html><html><body><div id="out"></div></body></html>');
+  // Mirror Obsidian's global DOM helper in the plain-browser test stand.
+  await page.evaluate(() => { window.createEl = tag => document.createElement(tag); });
   await page.addScriptTag({ path: mermaidPath, type: mermaidPath.endsWith('.mjs') ? 'module' : undefined });
   await page.addScriptTag({ path: bundlePath });
   await page.addScriptTag({ path: highlightBundlePath });

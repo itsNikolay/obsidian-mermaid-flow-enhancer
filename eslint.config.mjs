@@ -20,6 +20,13 @@ export default defineConfig(
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
     } },
+  { files: ['src/**/*.ts'], rules: {
+    '@typescript-eslint/no-unsafe-call': 'error',
+    '@typescript-eslint/no-unsafe-argument': 'error',
+    '@typescript-eslint/no-unsafe-member-access': 'error',
+    '@typescript-eslint/no-unsafe-assignment': 'error',
+    '@typescript-eslint/unbound-method': 'error',
+  } },
   { files: ['**/*.{js,mjs,ts,mts}'], linterOptions: { reportUnusedDisableDirectives: 'error' },
     rules: { eqeqeq: ['error', 'always', { null: 'ignore' }], 'prefer-const': 'error',
       'no-var': 'error', 'no-throw-literal': 'error' } },

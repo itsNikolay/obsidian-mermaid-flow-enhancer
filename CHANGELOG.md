@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1
+
+- Publish only the three Obsidian plugin assets; keep VirusTotal results in release notes, workflow artifacts, and public documentation.
+- Schedule and cancel highlight timers through each diagram’s owning window, including popouts.
+- Explicitly type DOM narrowing and text replacement callbacks; create measurement canvases with Obsidian’s DOM helper.
+- Wrap registered controller callbacks to preserve their receiver.
+- Make all four settings searchable through Obsidian’s declarative settings API and remove the deprecated slider tooltip.
+- Add regression coverage for timer window ownership and searchable settings persistence, plus real Obsidian settings rendering.
+
 ## 1.0.0
 
 - Publish the first release without the beta designation.

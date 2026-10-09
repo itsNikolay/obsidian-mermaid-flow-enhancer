@@ -90,3 +90,34 @@ test('disabled highlighting and dispose prevent further path changes', () => {
   controller.enter(event(dom.c));
   assert.equal(dom.svg.classList.contains('mpe-tracing'), false);
 });
+
+
+test('default timers stay bound to each diagram window, including colliding handles', () => {
+  const first = fakeSvg(), second = fakeSvg();
+  const cleared = [];
+  for (const [name, dom] of [['first', first], ['second', second]]) {
+    const ownerWindow = {
+      setTimeout(callback, delay) {
+        assert.equal(this, ownerWindow);
+        assert.equal(delay, 180);
+        dom.callback = callback;
+        return 1;
+      },
+      clearTimeout(handle) {
+        assert.equal(this, ownerWindow);
+        cleared.push([name, handle]);
+      },
+    };
+    dom.svg.ownerDocument = { defaultView: ownerWindow };
+  }
+  const controller = createPathController({ querySelectorAll: () => [first.svg, second.svg] },
+    () => ({ pathHighlight: true, hoverDelay: 180 }));
+  for (const dom of [first, second]) {
+    controller.enter({ target: dom.b });
+    controller.leave({ target: dom.b, relatedTarget: null });
+  }
+  controller.enter({ target: first.c });
+  assert.deepEqual(cleared, [['first', 1]]);
+  controller.dispose();
+  assert.deepEqual(cleared, [['first', 1], ['second', 1]]);
+});

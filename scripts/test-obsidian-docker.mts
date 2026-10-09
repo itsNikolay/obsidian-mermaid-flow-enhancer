@@ -155,6 +155,17 @@ try {
     await page.mouse.move(1400, 950);
     await page.waitForTimeout(800);
   }
+  if (!record) {
+    await page.keyboard.press('Control+,');
+    const settingsModal = page.locator('.modal');
+    await settingsModal.getByText('Mermaid Flow Enhancer', { exact: true }).click();
+    const sliders = settingsModal.locator('input[type="range"]');
+    assert.equal(await sliders.count(), 2, 'Declarative sliders must render in real Obsidian');
+    assert.equal(await sliders.nth(0).inputValue(), '450');
+    assert.equal(await sliders.nth(1).inputValue(), '180');
+    assert.equal(await settingsModal.locator('.checkbox-container').count(), 2, 'Declarative toggles must render');
+    await page.keyboard.press('Escape');
+  }
   assert.equal(errors.length, 0, errors.join('\n'));
   await writeFile(`${out}/report.json`, JSON.stringify({ obsidian: process.env.OBSIDIAN_VERSION,
     plugin: JSON.parse(await readFile('manifest.json', 'utf8')).version, realApp: true,

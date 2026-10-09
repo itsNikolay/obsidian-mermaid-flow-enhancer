@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, type App, type Plugin } from 'obsidian';
+import { PluginSettingTab, type App, type Plugin, type SettingDefinitionItem } from 'obsidian';
 
 export interface EnhancerSettings {
   compactLayout: boolean;
@@ -27,19 +27,40 @@ export function normalizeSettings(value: unknown = {}): EnhancerSettings {
 export class EnhancerSettingsTab extends PluginSettingTab {
   private readonly plugin: SettingsOwner;
   constructor(app: App, plugin: SettingsOwner) { super(app, plugin); this.plugin = plugin; }
-  display(): void {
-    const { containerEl } = this; containerEl.empty();
-    for (const [key, name, desc] of [
-      ['compactLayout', 'Compact layout', 'Align branches, shorten connectors and adapt label wrapping. Reopen the note to apply.'],
-      ['pathHighlight', 'Highlight ancestor paths', 'Highlight incoming forward paths on hover or keyboard focus.']] as const) {
-      new Setting(containerEl).setName(name).setDesc(desc).addToggle(toggle => toggle.setValue(this.plugin.settings[key]).onChange(async value => {
-        this.plugin.settings[key] = value; await this.plugin.saveSettings();
-      }));
+  getSettingDefinitions(): SettingDefinitionItem<keyof EnhancerSettings>[] {
+    return [
+      {
+        name: 'Compact layout',
+        desc: 'Align branches, shorten connectors and adapt label wrapping. Reopen the note to apply.',
+        control: { type: 'toggle', key: 'compactLayout', defaultValue: DEFAULT_SETTINGS.compactLayout },
+      },
+      {
+        name: 'Highlight ancestor paths',
+        desc: 'Highlight incoming forward paths on hover or keyboard focus.',
+        control: { type: 'toggle', key: 'pathHighlight', defaultValue: DEFAULT_SETTINGS.pathHighlight },
+      },
+      {
+        name: 'Animation duration (ms)',
+        control: { type: 'slider', key: 'animationDuration', defaultValue: DEFAULT_SETTINGS.animationDuration,
+          min: 0, max: 2000, step: 10 },
+      },
+      {
+        name: 'Hover reset delay (ms)',
+        control: { type: 'slider', key: 'hoverDelay', defaultValue: DEFAULT_SETTINGS.hoverDelay,
+          min: 0, max: 1000, step: 10 },
+      },
+    ];
+  }
+  getControlValue(key: string): unknown {
+    if (key === 'compactLayout' || key === 'pathHighlight' || key === 'animationDuration' || key === 'hoverDelay') {
+      return this.plugin.settings[key];
     }
-    for (const [key, name, max] of [['animationDuration', 'Animation duration (ms)', 2000], ['hoverDelay', 'Hover reset delay (ms)', 1000]] as const) {
-      new Setting(containerEl).setName(name).addSlider(slider => slider.setLimits(0, max, 10).setValue(this.plugin.settings[key]).setDynamicTooltip().onChange(async value => {
-        this.plugin.settings[key] = value; await this.plugin.saveSettings();
-      }));
+    return undefined;
+  }
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (key === 'compactLayout' || key === 'pathHighlight' || key === 'animationDuration' || key === 'hoverDelay') {
+      this.plugin.settings = normalizeSettings({ ...this.plugin.settings, [key]: value });
+      await this.plugin.saveSettings();
     }
   }
 }

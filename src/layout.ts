@@ -1,3 +1,5 @@
+import type {} from 'obsidian';
+
 export type Direction = "TD" | "TB" | "BT" | "LR" | "RL";
 export type Point = [number, number];
 type Axis = 0 | 1;
@@ -61,8 +63,8 @@ export function orthogonalPath(points: Point[], direction: Direction | "", sourc
 function transformOffset(element: Node | null): Point | undefined {
   const offset: Point = [0, 0];
   for (let el = element; el; el = el.parentNode) {
-    const transform = "getAttribute" in el && typeof el.getAttribute === "function"
-      ? String(el.getAttribute("transform") || "") : "";
+    const transform = el.nodeType === 1
+      ? (el as Element).getAttribute("transform") || "" : "";
     if (!transform) continue;
     const t = transform.match(/^\s*translate\(\s*([-+\d.eE]+)(?:[,\s]+([-+\d.eE]+))?\s*\)\s*$/);
     if (!t) return undefined;
@@ -428,18 +430,18 @@ export function widenSingleRectangles(source: string, svg: string, direction: Di
     !nodes.some(other => other !== n && Math.abs(other.y - n.y) < 2)).map(n => n.key));
   // Nonbreaking spaces let Mermaid measure and lay out the wider label itself.
   // Explicit line breaks and long labels retain their author's wrapping.
-  return source.replace(/([\p{L}\p{N}_-]+)\["([^"\n]+)"\]/gu, (whole, key, label) => {
+  return source.replace(/([\p{L}\p{N}_-]+)\["([^"\n]+)"\]/gu, (whole: string, key: string, label: string): string => {
     if (!single.has(key) || label.length > 55 || /[<>&`]/.test(label)) return whole;
     return `${key}["${label.replace(/ /g, "\u00a0")}"]`;
   });
 }
 
 export function wrapDecisions(source: string): string {
-  const canvas = document.createElement("canvas");
+  const canvas = createEl("canvas");
   const context = canvas.getContext("2d");
   if (!context) return source;
   context.font = '16px "trebuchet ms", verdana, arial, sans-serif';
-  return source.replace(/([\p{L}\p{N}_-]+)\{"([^"\n]+)"\}/gu, (whole, key, label) => {
+  return source.replace(/([\p{L}\p{N}_-]+)\{"([^"\n]+)"\}/gu, (whole: string, key: string, label: string): string => {
     if (/[<>&`]/.test(label) || context.measureText(label).width <= 100) return whole;
     const words = label.split(/\s+/);
     const lines: string[] = [];

@@ -75,4 +75,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" main.js manifest.json styles.css artifacts/virustotal/virustotal-report.json artifacts/virustotal/virustotal-report.md --generate-notes --title "Mermaid Flow Enhancer $RELEASE_TAG"
+          gh release create "$RELEASE_TAG" main.js manifest.json styles.css --notes-file artifacts/virustotal/virustotal-report.md --generate-notes --title "Mermaid Flow Enhancer $RELEASE_TAG"

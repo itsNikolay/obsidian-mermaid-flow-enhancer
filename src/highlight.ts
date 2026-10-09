@@ -12,7 +12,7 @@ export interface AncestorPath {
   edges: Set<string>;
 }
 
-type TimerHandle = ReturnType<typeof setTimeout> | number;
+type TimerHandle = number;
 export interface PathTimers {
   setTimeout(callback: () => void, delay: number): TimerHandle;
   clearTimeout(handle: TimerHandle): void;
@@ -66,14 +66,14 @@ export function highlightAncestors(element: Element): void {
 export function createPathController(
   document: Pick<Document, 'querySelectorAll'>,
   getSettings: () => Pick<EnhancerSettings, 'pathHighlight' | 'hoverDelay'>,
-  timers: PathTimers = { setTimeout: (fn, delay) => setTimeout(fn, delay), clearTimeout: id => clearTimeout(id) }
+  timers?: PathTimers
 ): PathController {
   const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel";
-  const pending = new Map<Element, TimerHandle>();
+  const pending = new Map<Element, { handle: TimerHandle; timers: PathTimers }>();
   let disposed = false;
   const cancel = (svg: Element) => {
     const timer = pending.get(svg);
-    if (timer !== undefined) timers.clearTimeout(timer);
+    if (timer !== undefined) timer.timers.clearTimeout(timer.handle);
     pending.delete(svg);
   };
   const reset = (svg: Element) => {
@@ -97,14 +97,20 @@ export function createPathController(
       const svg = node.closest("svg");
       if (!svg) return;
       cancel(svg);
-      pending.set(svg, timers.setTimeout(() => {
+      const ownerWindow = svg.ownerDocument?.defaultView;
+      const ownerTimers = timers ?? {
+        setTimeout: (callback: () => void, delay: number) => (ownerWindow ?? window).setTimeout(callback, delay),
+        clearTimeout: (handle: TimerHandle) => (ownerWindow ?? window).clearTimeout(handle),
+      };
+      const handle = ownerTimers.setTimeout(() => {
         pending.delete(svg);
         reset(svg);
-      }, getSettings().hoverDelay));
+      }, getSettings().hoverDelay);
+      pending.set(svg, { handle, timers: ownerTimers });
     },
     dispose() {
       disposed = true;
-      pending.forEach(timer => timers.clearTimeout(timer));
+      pending.forEach(timer => timer.timers.clearTimeout(timer.handle));
       pending.clear();
       document.querySelectorAll("svg.mfe-enhanced").forEach(reset);
     }

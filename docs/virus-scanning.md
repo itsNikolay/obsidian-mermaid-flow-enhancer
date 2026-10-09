@@ -2,6 +2,8 @@
 
 The release workflow submits only the three public plugin artifacts (`main.js`, `manifest.json`, `styles.css`) to the VirusTotal v3 API before publishing. It waits for completed analyses and requires at least one engine verdict per file. Malicious or suspicious detections, invalid/empty results, missing credentials, API failures, or incomplete analyses block publication. Timeouts, failed engines, and unsupported file types remain visible in JSON statistics; they are not counted as no-detection verdicts.
 
+Release assets contain only `main.js`, `manifest.json`, and `styles.css`, which Obsidian downloads. The Markdown scan report is included in release notes; full JSON and Markdown reports are preserved as workflow artifacts and archived publicly under `docs/security/` after verification. Reports are not attached as unsupported plugin assets.
+
 The uploaded files are included in VirusTotal's community dataset. The allowlist and manifest validation prevent this workflow from uploading notes or arbitrary directories. Nothing runs inside the installed Obsidian plugin; it has no API key or new network behavior.
 
 ## Configure

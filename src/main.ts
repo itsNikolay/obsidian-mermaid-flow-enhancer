@@ -30,11 +30,11 @@ export default class MermaidFlowEnhancer extends Plugin {
     if (this.stopped) return;
     this.addSettingTab(new EnhancerSettingsTab(this.app, this));
     const controller = createPathController(document, () => this.settings);
-    this.registerDomEvent(document, "pointerover", controller.enter);
-    this.registerDomEvent(document, "pointerout", controller.leave);
-    this.registerDomEvent(document, "focusin", controller.enter);
-    this.registerDomEvent(document, "focusout", controller.leave);
-    this.register(controller.dispose);
+    this.registerDomEvent(document, "pointerover", event => controller.enter(event));
+    this.registerDomEvent(document, "pointerout", event => controller.leave(event));
+    this.registerDomEvent(document, "focusin", event => controller.enter(event));
+    this.registerDomEvent(document, "focusout", event => controller.leave(event));
+    this.register(() => controller.dispose());
     // Obsidian exposes this loader without a precise Mermaid type.
     const mermaid = await loadMermaid() as MermaidRuntime;
     if (this.stopped) return;
