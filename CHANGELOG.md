@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 - Restore path highlighting in Obsidian 1.15, which draws Mermaid diagrams with Pele instead of Mermaid.js. The plugin hooks Pele’s `mount` and marks nodes and connectors in every drawing, including redraws for a new width. LR/RL diagrams that Pele turns into TB for a narrow note keep correct return edges.
 - Lay out Pele flowcharts with the plugin’s compact spacing, label wrapping, and orthogonal rounded connectors by passing these settings to Pele; a diagram’s own configuration still wins. The Compact layout setting applies to both renderers.
