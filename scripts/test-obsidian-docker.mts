@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from 'playwright';
+import { chromium, type Browser, type Locator, type Page } from 'playwright';
 import type { ChildProcessByStdio } from 'node:child_process';
 import type { Readable, Writable } from 'node:stream';
 import type { TFile } from 'obsidian';
@@ -6,19 +6,22 @@ import { mkdir, writeFile, copyFile, readFile } from 'node:fs/promises';
 import { spawn, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 if (process.env.MFE_DOCKER !== '1') throw new Error('Run this through npm run docker:check or docker:record. Host Obsidian is never launched.');
 const record = process.argv[2] === 'record';
 const vault = '/tmp/mfe-vault', profile = join(homedir(), '.config', 'obsidian'), out = '/artifacts';
 await mkdir(`${vault}/.obsidian/plugins/mermaid-flow-enhancer`, { recursive: true });
 await mkdir(profile, { recursive: true });
 await mkdir(out, { recursive: true });
+// The installer loads the newest obsidian-x.y.z.asar from its profile, as it does a downloaded update.
+const update = process.env.OBSIDIAN_ASAR;
+if (update) await copyFile(update, join(profile, basename(update)));
 for (const file of ['main.js', 'manifest.json', 'styles.css'])
   await copyFile(file, `${vault}/.obsidian/plugins/mermaid-flow-enhancer/${file}`);
 await writeFile(`${vault}/.obsidian/community-plugins.json`, JSON.stringify(['mermaid-flow-enhancer']));
 await writeFile(`${vault}/.obsidian/app.json`, JSON.stringify({ safeMode: false, livePreview: false, readableLineLength: false, showInlineTitle: false }));
 await writeFile(`${profile}/obsidian.json`, JSON.stringify({ vaults: { demo: { path: vault, ts: Date.now(), open: true } } }));
-await writeFile(`${vault}/Demo.md`, `# Mermaid Flow Enhancer\n\nSynthetic Docker demonstration — no personal notes.\n\n\`\`\`mermaid\nflowchart LR\nrequest[Request] --> triage[Triage]\ntriage --> ready{Ready to build?}\nready -->|No| clarify[Clarify details]\nclarify --> triage\nready -->|Yes| build[Build change]\nbuild --> checks{Checks pass?}\nchecks -->|No| build\nchecks -->|Yes| release[Release]\nrelease --> done((Complete))\n\`\`\`\n`);
+await writeFile(`${vault}/Demo.md`, `# Mermaid Flow Enhancer\n\nSynthetic Docker demonstration — no personal notes.\n\n\`\`\`mermaid\nflowchart LR\nrequest[Request] --> triage[Triage]\ntriage --> ready{Ready to build?}\nready -->|No| clarify[Clarify details]\nclarify --> triage\nready -->|Yes| build[Build change]\nbuild --> checks{Checks pass?}\nchecks -->|No| build\nchecks -->|Yes| release[Release]\nrelease --> done((Complete))\n\`\`\`\n\n\`\`\`mermaid\n%% mfe:off\nflowchart LR\nplainStart[Opted out] --> plainEnd[Plain]\n\`\`\`\n`);
 if (record) await copyFile('demo-vault/Examples/grocery-delivery.md', `${vault}/Demo.md`);
 const errors: string[] = [];
 let app: ChildProcessByStdio<null, null, Readable> | undefined;
@@ -63,7 +66,9 @@ try {
     await leaf.openFile(file as TFile);
     await leaf.setViewState({ type: 'markdown', state: { file: 'Demo.md', mode: 'preview' } });
   });
-  await page.getByRole('button', { name: 'Allow', exact: true }).first().click({ timeout: 15000 });
+  // Obsidian 1.14 asks once more here; 1.15 does not.
+  await page.getByRole('button', { name: 'Allow', exact: true }).first().click({ timeout: 15000 })
+    .catch(async (error: unknown) => { if (!update) throw error; });
   await page.evaluate(() => {
     globalThis.app.workspace.leftSplit.collapse();
     globalThis.app.workspace.rightSplit.collapse();
@@ -72,11 +77,20 @@ try {
   await page.bringToFront();
   spawnSync('xdotool', ['windowraise', windowId]);
   spawnSync('xdotool', ['windowfocus', windowId]);
-  const svg = page.locator('svg.mfe-enhanced').first();
+  // Obsidian 1.15 draws diagrams with Pele; earlier versions use Mermaid.js through the plugin.
+  const svg = page.locator('.mermaid svg.mfe-enhanced, .mermaid > svg.pele-flowchart').first();
   await svg.waitFor({ timeout: 30000 });
+  const pele = await svg.evaluate(el => el.classList.contains('pele'));
+  const nodeSelector = pele ? '.pele-node' : '.node';
+  const nodeByKey = (key: string) => svg.locator(pele ? `.pele-node[data-id="${key}"]` : `.node[data-mpe-key="${key}"]`);
+  // The user agent names the installer; the app reports the version it loaded, as its CLI does.
+  type Electron = { ipcRenderer: { sendSync(channel: 'version'): string } };
+  const appVersion = await page.evaluate(() => (globalThis as unknown as { require(id: 'electron'): Electron })
+    .require('electron').ipcRenderer.sendSync('version'));
   const expectedNodes = record ? 17 : 8;
-  assert.equal(await svg.locator('.node').count(), expectedNodes);
-  const geometry = await svg.evaluate(svg => {
+  assert.equal(await svg.locator(nodeSelector).count(), expectedNodes);
+  // Connector docking is a Mermaid.js layout adjustment; Pele output keeps its own layout.
+  const geometry = pele ? null : await svg.evaluate(svg => {
     const nodes = new Map([...svg.querySelectorAll<SVGGElement>('.node[data-mpe-key]')].map(n =>
       [n.dataset.mpeKey, n.querySelector('rect,polygon,circle,ellipse')!.getBoundingClientRect()]));
     const errors = [...svg.querySelectorAll<SVGPathElement>('path.flowchart-link[data-mpe-from]')].flatMap(path => {
@@ -91,14 +105,24 @@ try {
     });
     return { endpoints: errors.length, maxError: Math.max(...errors) };
   });
-  assert.equal(geometry.endpoints, record ? 44 : 18);
-  if (!record) assert.ok(geometry.maxError < 0.01, JSON.stringify(geometry));
-  else assert.ok(Number.isFinite(geometry.maxError), 'All complex diagram endpoints must be measurable');
+  // Pele lays out the plugin's compact flowcharts with orthogonal, rounded connectors.
+  const curves = pele ? await svg.evaluate(el => [...el.querySelectorAll('.pele-edge > path:not(.pele-marker)')]
+    .filter(path => /C/.test(path.getAttribute('d') ?? '')).length) : null;
+  if (pele) assert.equal(curves, 0, 'Compact layout must route Pele connectors orthogonally');
+  if (geometry) {
+    assert.equal(geometry.endpoints, record ? 44 : 18);
+    if (!record) assert.ok(geometry.maxError < 0.01, JSON.stringify(geometry));
+    else assert.ok(Number.isFinite(geometry.maxError), 'All complex diagram endpoints must be measurable');
+  }
+  const edgeBetween = (from: string, to: string) => svg.locator(pele
+    ? `.pele-edge[data-id^="L_${from}_${to}_"] > path:not(.pele-marker)`
+    : `path.flowchart-link[data-mpe-from="${from}"][data-mpe-to="${to}"]`).first();
+  const onPath = (locator: Locator) => locator.evaluate(el => (el.closest('.pele-edge') ?? el).classList.contains('mpe-on-path'));
 
   if (record) {
     await page.evaluate(() => {
       const style = document.createElement('style');
-      style.textContent = '.markdown-preview-view .mermaid svg.mfe-enhanced { max-height: 740px; width: 100%; object-fit: contain; }';
+      style.textContent = '.markdown-preview-view .mermaid svg:is(.mfe-enhanced, .pele-flowchart) { max-height: 740px; width: 100%; object-fit: contain; }';
       document.head.append(style);
     });
     const bounds = await svg.boundingBox();
@@ -120,19 +144,29 @@ try {
     }, dark);
     await page.waitForTimeout(700);
     assert.equal(await page.evaluate(() => document.body.classList.contains('theme-dark')), dark);
-    const palette = await svg.locator('.node rect').first().evaluate(el => ({ fill: getComputedStyle(el).fill }));
-    palettes.push({ theme: dark ? 'dark' : 'light', ...palette });
+    const palette = await svg.locator(`${nodeSelector} rect`).first().evaluate(el => ({ fill: getComputedStyle(el).fill }));
+    // Both renderers use the plugin's palette.
+    assert.equal(palette.fill, dark ? 'rgb(39, 52, 73)' : 'rgb(255, 255, 255)');
     await page.screenshot({ path: `${out}/obsidian-${dark ? 'dark' : 'light'}.png` });
-    const request = svg.locator(`.node[data-mpe-key="${record ? 'start' : 'request'}"]`);
-    const release = svg.locator(`.node[data-mpe-key="${record ? 'receive' : 'release'}"]`);
+    const request = nodeByKey(record ? 'start' : 'request');
+    const release = nodeByKey(record ? 'receive' : 'release');
+    let highlight;
     if (!record) {
       await release.hover();
       await page.waitForTimeout(900);
-      assert.match((await request.getAttribute('class')) ?? '', /mpe-on-path/);
+      assert.match((await request.getAttribute('class')) ?? '', /mpe-on-path/, 'Hovering a node must trace its ancestors');
       assert.equal(await svg.evaluate(el => el.classList.contains('mpe-tracing')), true);
+      // The return edge clarify → triage is not followed, so clarify fades.
+      const clarify = nodeByKey('clarify');
+      assert.doesNotMatch((await clarify.getAttribute('class')) ?? '', /mpe-on-path/);
+      assert.equal(await clarify.evaluate(el => getComputedStyle(el).opacity), '0.22');
+      await page.screenshot({ path: `${out}/obsidian-${dark ? 'dark' : 'light'}-trace.png` });
+      highlight = await release.locator('rect').first().evaluate(el => getComputedStyle(el).stroke);
+      assert.equal(highlight, dark ? 'rgb(138, 203, 255)' : 'rgb(57, 122, 181)', 'Traced nodes must be outlined');
     }
+    palettes.push({ theme: dark ? 'dark' : 'light', ...palette, highlight });
     for (const key of (record ? ['list', 'stock', 'replace', 'address', 'slot', 'paid', 'retry', 'order', 'courier', 'notice', 'home', 'check', 'done'] : ['request', 'triage', 'ready', 'build', 'checks', 'release', 'done'])) {
-      const node = svg.locator(`.node[data-mpe-key="${key}"]`);
+      const node = nodeByKey(key);
       const point = await node.evaluate(el => { const r = el.getBoundingClientRect(); return [Math.round(r.x+r.width/2), Math.round(r.y+r.height/2)]; });
       assert.equal(spawnSync('xdotool', ['mousemove', '--sync', ...point.map(String)]).status, 0);
       await node.hover();
@@ -140,22 +174,42 @@ try {
       assert.match((await node.getAttribute('class')) ?? '', /mpe-on-path/);
       if (record && key === 'done') assert.match((await request.getAttribute('class')) ?? '', /mpe-on-path/);
     }
-    if (record) {
-      const edge = svg.locator('path.flowchart-link[data-mpe-to="courier"]');
-      await edge.scrollIntoViewIfNeeded();
-      const edgePoint = await edge.evaluate(element => {
-        const el = element as SVGPathElement;
-        const p = el.getPointAtLength(el.getTotalLength() * 0.3).matrixTransform(el.getScreenCTM() ?? undefined);
-        return [p.x, p.y] as const;
-      });
-      await page.mouse.move(...edgePoint);
-      await page.waitForTimeout(1400);
-      await page.waitForTimeout(2000);
-    }
+    const edge = record ? edgeBetween('paid', 'courier') : edgeBetween('checks', 'release');
+    await edge.scrollIntoViewIfNeeded();
+    const edgePoint = await edge.evaluate((element, share) => {
+      const el = element as SVGPathElement;
+      const p = el.getPointAtLength(el.getTotalLength() * share).matrixTransform(el.getScreenCTM() ?? undefined);
+      return [p.x, p.y] as const;
+    }, record ? 0.3 : 0.5);
+    await page.mouse.move(...edgePoint);
+    await page.waitForTimeout(record ? 1400 : 650);
+    if (!record) {
+      assert.equal(await onPath(edge), true, 'Hovering a connector must trace it');
+      assert.match((await release.getAttribute('class')) ?? '', /mpe-on-path/);
+      assert.doesNotMatch((await nodeByKey('done').getAttribute('class')) ?? '', /mpe-on-path/);
+    } else await page.waitForTimeout(2000);
     await page.mouse.move(1400, 950);
     await page.waitForTimeout(800);
+    assert.equal(await svg.evaluate(el => el.classList.contains('mpe-tracing')), false, 'Leaving the diagram must clear the path');
   }
   if (!record) {
+    // A popout window has its own document and events.
+    const popup = context.waitForEvent('page');
+    await page.evaluate(async () => {
+      const leaf = globalThis.app.workspace.openPopoutLeaf();
+      await leaf.setViewState({ type: 'markdown', state: { file: 'Demo.md', mode: 'preview' } });
+    });
+    const popout = await popup;
+    const inPopout = (key: string) => popout.locator(pele ? `.pele-node[data-id="${key}"]` : `.node[data-mpe-key="${key}"]`).first();
+    await inPopout('release').hover();
+    await popout.waitForTimeout(650);
+    assert.match((await inPopout('request').getAttribute('class')) ?? '', /mpe-on-path/, 'Popout windows must trace paths');
+    await popout.screenshot({ path: `${out}/obsidian-popout-trace.png` });
+    await popout.close();
+    const plain = page.locator('.mermaid svg', { hasText: 'Opted out' }).first();
+    await plain.locator(nodeSelector).first().hover();
+    await page.waitForTimeout(650);
+    assert.equal(await plain.evaluate(el => el.matches('.mfe-enhanced, .mfe-pele, .mpe-tracing')), false, '%% mfe:off must leave the diagram untouched');
     assert.equal(await page.evaluate(() => globalThis.app.commands.executeCommandById('app:open-settings')), true);
     const settingsPage = context.pages().find(candidate => candidate !== page) ?? await context.waitForEvent('page');
     await settingsPage.getByText('Mermaid Flow Enhancer', { exact: true }).click();
@@ -168,7 +222,8 @@ try {
     await settingsPage.close();
   }
   assert.equal(errors.length, 0, errors.join('\n'));
-  await writeFile(`${out}/report.json`, JSON.stringify({ obsidian: process.env.OBSIDIAN_VERSION,
+  await writeFile(`${out}/report.json`, JSON.stringify({ obsidian: appVersion, installer: process.env.OBSIDIAN_VERSION,
+    update: update ? basename(update) : null, renderer: pele ? 'pele' : 'mermaid', curves,
     plugin: JSON.parse(await readFile('manifest.json', 'utf8')).version, realApp: true,
     desktop: 'Docker Xvfb', recording: record, scenario: record ? 'grocery-delivery' : 'smoke', nodes: expectedNodes, geometry, palettes, errors }, null, 2));
   console.log('Real Obsidian Docker smoke check passed');
