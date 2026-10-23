@@ -55,7 +55,7 @@ export function highlightAncestors(element: Element): void {
   const selected = ancestorPath(edges.filter(edge => edge.forward), key || edge!.from);
   if (edge) { selected.nodes.add(edge.to); selected.edges.add(edge.id); }
   svg.classList.add("mpe-tracing");
-  for (const el of svg.querySelectorAll(".node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel")) {
+  for (const el of svg.querySelectorAll(".node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel, .pele-node, .pele-edge, .pele-edge-label")) {
     const key = el.getAttribute("data-mpe-key");
     const id = el.getAttribute("data-id") || el.querySelector("[data-id]")?.getAttribute("data-id") || el.id;
     el.classList.toggle("mpe-on-path", key ? selected.nodes.has(key) : selected.edges.has(id));
@@ -68,7 +68,8 @@ export function createPathController(
   getSettings: () => Pick<EnhancerSettings, 'pathHighlight' | 'hoverDelay'>,
   timers?: PathTimers
 ): PathController {
-  const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel";
+  const target = ".mermaid svg.mfe-enhanced .node, .mermaid svg.mfe-enhanced .flowchart-link, .mermaid svg.mfe-enhanced .edgePath path.path, .mermaid svg.mfe-enhanced .edgeLabels > .edgeLabel, " +
+    ".mermaid svg.mfe-pele .pele-node, .mermaid svg.mfe-pele .pele-edge, .mermaid svg.mfe-pele .pele-edge-label";
   const pending = new Map<Element, { handle: TimerHandle; timers: PathTimers }>();
   let disposed = false;
   const cancel = (svg: Element) => {
@@ -112,7 +113,7 @@ export function createPathController(
       disposed = true;
       pending.forEach(timer => timer.timers.clearTimeout(timer.handle));
       pending.clear();
-      document.querySelectorAll("svg.mfe-enhanced").forEach(reset);
+      document.querySelectorAll("svg.mfe-enhanced, svg.mfe-pele").forEach(reset);
     }
   };
 }

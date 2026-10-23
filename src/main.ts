@@ -19,25 +19,36 @@ const defaults = {
 
 import { styleSvg, widenSingleRectangles, wrapDecisions } from "./layout";
 import { createPathController } from "./highlight";
+import { patchPele, preparePeleDiagram, tracePeleDiagram, type PeleHost } from "./pele";
 import { normalizeSettings, EnhancerSettingsTab } from "./settings";
 
 export default class MermaidFlowEnhancer extends Plugin {
   private stopped = false;
+  private watched = new WeakSet<Document>();
   settings: EnhancerSettings = normalizeSettings();
   async onload() {
     this.stopped = false;
+    this.watched = new WeakSet();
     this.settings = normalizeSettings(await this.loadData());
     if (this.stopped) return;
     this.addSettingTab(new EnhancerSettingsTab(this.app, this));
-    const controller = createPathController(document, () => this.settings);
-    this.registerDomEvent(document, "pointerover", event => controller.enter(event));
-    this.registerDomEvent(document, "pointerout", event => controller.leave(event));
-    this.registerDomEvent(document, "focusin", event => controller.enter(event));
-    this.registerDomEvent(document, "focusout", event => controller.leave(event));
-    this.register(() => controller.dispose());
+    this.watchWindow(document);
+    this.registerEvent(this.app.workspace.on("window-open", (_window, win) => this.watchWindow(win.document)));
+    this.app.workspace.onLayoutReady(() => this.documents().forEach(doc => this.watchWindow(doc)));
     // Obsidian exposes this loader without a precise Mermaid type.
     const mermaid = await loadMermaid() as MermaidRuntime;
     if (this.stopped) return;
+    // Obsidian 1.15+ renders notes with Pele directly; its Mermaid runtime is only a shim.
+    const host = globalThis as typeof globalThis & PeleHost;
+    if (host.pele) {
+      const { curve, nodeSpacing, rankSpacing, wrappingWidth } = defaults.flowchart;
+      const layout = { curve, nodeSpacing, rankSpacing, wrappingWidth };
+      this.register(patchPele(host, {
+        prepare: (element, source) => preparePeleDiagram(element, source, this.settings.compactLayout ? layout : undefined),
+        trace: (element, source) => tracePeleDiagram(element, source, this.settings.animationDuration),
+      }));
+      return;
+    }
     const original = mermaid.render;
     const getSettings = () => this.settings;
     const wrapped: MermaidRender = async function (id, source, ...args) {
@@ -83,11 +94,29 @@ export default class MermaidFlowEnhancer extends Plugin {
       if (mermaid.render === wrapped) mermaid.render = original;
     });
   }
+  // Popout windows have their own documents, so each window gets its own events and controller.
+  private watchWindow(doc: Document) {
+    if (this.watched.has(doc)) return;
+    this.watched.add(doc);
+    const controller = createPathController(doc, () => this.settings);
+    this.registerDomEvent(doc, "pointerover", event => controller.enter(event));
+    this.registerDomEvent(doc, "pointerout", event => controller.leave(event));
+    this.registerDomEvent(doc, "focusin", event => controller.enter(event));
+    this.registerDomEvent(doc, "focusout", event => controller.leave(event));
+    this.register(() => controller.dispose());
+  }
+  private documents(): Document[] {
+    const docs = new Set([document]);
+    this.app.workspace.iterateAllLeaves(leaf => { docs.add(leaf.view.containerEl.ownerDocument); });
+    return [...docs];
+  }
   async saveSettings() {
     this.settings = normalizeSettings(this.settings);
     await this.saveData(this.settings);
-    document.querySelectorAll<SVGSVGElement>("svg.mfe-enhanced").forEach(svg => svg.style.setProperty("--mpe-duration", `${this.settings.animationDuration}ms`));
-    if (!this.settings.pathHighlight) document.querySelectorAll(".mpe-tracing, .mpe-on-path").forEach(el => el.classList.remove("mpe-tracing", "mpe-on-path"));
+    for (const doc of this.documents()) {
+      doc.querySelectorAll<SVGSVGElement>("svg.mfe-enhanced, svg.mfe-pele").forEach(svg => svg.style.setProperty("--mpe-duration", `${this.settings.animationDuration}ms`));
+      if (!this.settings.pathHighlight) doc.querySelectorAll(".mpe-tracing, .mpe-on-path").forEach(el => el.classList.remove("mpe-tracing", "mpe-on-path"));
+    }
   }
   onunload() { this.stopped = true; }
 };

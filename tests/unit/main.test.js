@@ -3,7 +3,13 @@ const assert = require('node:assert/strict');
 const Module = require('node:module');
 
 class FakePlugin {
-  constructor() { this.disposers = []; this.domEvents = []; this.data = {}; }
+  constructor() {
+    this.disposers = []; this.domEvents = []; this.events = []; this.data = {}; this.leaves = [];
+    const handlers = this.handlers = {};
+    this.app = { workspace: { on: (name, callback) => { handlers[name] = callback; return { name }; },
+      onLayoutReady: callback => callback(), iterateAllLeaves: callback => this.leaves.forEach(callback) } };
+  }
+  registerEvent(ref) { this.events.push(ref); }
   loadData() { return this.dataPromise || Promise.resolve(this.data); }
   saveData(value) { this.saved = value; return Promise.resolve(); }
   addSettingTab(tab) { this.tab = tab; }
@@ -15,7 +21,7 @@ let mermaid;
 let loadMermaidCalls = 0;
 let styleCalls;
 let styleError = null;
-let lastController;
+let controllers = [];
 const mockObsidian = {
   Plugin: FakePlugin,
   PluginSettingTab: class {},
@@ -37,8 +43,9 @@ Module._load = function (request, parent, isMain) {
   };
   if (request === './highlight') return {
     createPathController: (doc, getSettings) => {
-      lastController = { doc, getSettings, enter() {}, leave() {}, dispose() { this.disposed = true; } };
-      return lastController;
+      const controller = { doc, getSettings, enter() {}, leave() {}, dispose() { this.disposed = true; } };
+      controllers.push(controller);
+      return controller;
     },
   };
   if (request === './settings') return {
@@ -158,5 +165,60 @@ test('transformation errors return the renderer result and unloading restores re
   assert.equal(mermaid.render, original);
   styleError = null;
   console.warn = oldWarn;
+  global.document = previousDocument;
+});
+
+test('Obsidian 1.15 Pele rendering is laid out and traced instead of wrapping the Mermaid shim', async () => {
+  const previousDocument = global.document;
+  global.document = fakeDocument();
+  const original = async () => '<svg/>';
+  mermaid = { render: original }; styleCalls = [];
+  const queried = [], configs = [];
+  const pele = { mount(element, text, options) {
+    configs.push(options.config);
+    options.onRender({});
+    return { source: text, update() {} };
+  } };
+  globalThis.pele = pele;
+  const plugin = new Plugin();
+  await plugin.onload();
+  assert.equal(mermaid.render, original);
+  assert.notEqual(globalThis.pele, pele);
+  const marked = [];
+  const element = { querySelector: selector => { queried.push(selector); return null; },
+    classList: { toggle: (name, on) => marked.push([name, on]) } };
+  globalThis.pele.mount(element, 'flowchart LR\nA-->B', { config: { theme: 'kept' } });
+  globalThis.pele.mount(element, 'flowchart LR\n%% mfe:off\nA-->B');
+  plugin.settings.compactLayout = false;
+  globalThis.pele.mount(element, 'flowchart LR\nA-->B');
+  assert.deepEqual(configs, [{ theme: 'kept', flowchart: { curve: 'step', nodeSpacing: 28, rankSpacing: 26, wrappingWidth: 140 } },
+    undefined, undefined]);
+  assert.deepEqual(queried, Array(3).fill(':scope > svg.pele-flowchart'));
+  assert.deepEqual(marked, [['mfe-flow', true], ['mfe-flow', false], ['mfe-flow', true]]);
+  assert.equal(styleCalls.length, 0);
+  for (const dispose of plugin.disposers) dispose();
+  assert.equal(globalThis.pele, pele);
+  delete globalThis.pele;
+  global.document = previousDocument;
+});
+
+test('every window, including popouts, gets its own path controller once', async () => {
+  const previousDocument = global.document;
+  global.document = fakeDocument();
+  mermaid = { render: async () => '<svg/>' };
+  controllers = [];
+  const plugin = new Plugin();
+  const restored = fakeDocument();
+  plugin.leaves = [{ view: { containerEl: { ownerDocument: restored } } }, { view: { containerEl: { ownerDocument: global.document } } }];
+  await plugin.onload();
+  const popout = fakeDocument();
+  plugin.handlers['window-open']({}, { document: popout });
+  plugin.handlers['window-open']({}, { document: popout });
+  assert.deepEqual(controllers.map(c => c.doc), [global.document, restored, popout]);
+  for (const doc of [global.document, restored, popout])
+    assert.deepEqual(plugin.domEvents.filter(e => e.target === doc).map(e => e.name), ['pointerover', 'pointerout', 'focusin', 'focusout']);
+  assert.deepEqual(plugin.events, [{ name: 'window-open' }]);
+  for (const dispose of plugin.disposers) dispose();
+  assert.equal(controllers.every(c => c.disposed), true);
   global.document = previousDocument;
 });

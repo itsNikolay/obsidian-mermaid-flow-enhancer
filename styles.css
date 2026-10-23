@@ -4,7 +4,7 @@
 /* Neutral surfaces, clear typography, and restrained blue path accents.
  * The renderer establishes font metrics and geometry before styling. */
 
-.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
+:is(.mermaid svg.mfe-enhanced, .mermaid.mfe-flow > svg):not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #1f2020;
   --mpe-border: #aaa;
   --mpe-group: #292c33;
@@ -14,7 +14,9 @@
   --mpe-line: #ccc;
   --mpe-label: #555;
   --mpe-highlight: #83b9e8;
+}
 
+.mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
   margin-block: 12px;
   margin-inline: 0;
   padding: 0;
@@ -26,7 +28,7 @@
   filter: none;
 }
 
-.theme-dark .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
+.theme-dark :is(.mermaid svg.mfe-enhanced, .mermaid.mfe-flow > svg):not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #273449;
   --mpe-border: #7186a2;
   --mpe-group: #1d2838;
@@ -38,7 +40,7 @@
   --mpe-highlight: #8acbff;
 }
 
-.theme-light .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) {
+.theme-light :is(.mermaid svg.mfe-enhanced, .mermaid.mfe-flow > svg):not(#mfe-native-style#mfe-theme-style) {
   --mpe-node: #fff;
   --mpe-border: #a0a7b0;
   --mpe-group: #eee;
@@ -179,9 +181,85 @@
   stroke-width: 2px;
 }
 
+/* Obsidian 1.15+ draws diagrams with Pele, which takes its colors from these variables. The
+ * plugin marks an enhanced flowchart's container before Pele draws it, so the palette applies
+ * from the first frame. Edge labels keep Pele's background, the note's own. */
+
+.mermaid.mfe-flow > svg:not(#mfe-native-style#mfe-theme-style) {
+  --pele-surface: var(--mpe-node);
+  --pele-surface-alt: var(--mpe-group);
+  --pele-border: var(--mpe-border);
+  --pele-fg: var(--mpe-text);
+  --pele-line: var(--mpe-line);
+  --pele-radius: 5px;
+}
+
+/* Shadows, weights, and path tracing are for the screen only. */
+
+@media not print {
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) :is(.pele-node, .pele-edge, .pele-edge-label) {
+    transition: opacity var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-node :is(rect, polygon, circle, ellipse, path):not(.pele-icon *),
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-edge > path:not(.pele-marker) {
+    transition: stroke var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), stroke-width var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-edge > .pele-marker {
+    transition: stroke var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1), fill var(--mpe-duration, 450ms) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .theme-dark .mermaid.mfe-flow > svg:not(#mfe-native-style#mfe-theme-style) .pele-node :is(rect, polygon, circle, ellipse, path):not(.pele-icon *) {
+    filter: drop-shadow(0 2px 3px #00000038);
+  }
+
+  .theme-light .mermaid.mfe-flow > svg:not(#mfe-native-style#mfe-theme-style) .pele-node :is(rect, polygon, circle, ellipse, path):not(.pele-icon *) {
+    filter: drop-shadow(1px 1px 1px #00000018);
+  }
+
+  .theme-dark .mermaid.mfe-flow > svg:not(#mfe-native-style#mfe-theme-style) .pele-edge > path:not(.pele-marker, [stroke-width]) {
+    stroke-width: 1.25px;
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing :where(.pele-node, .pele-edge, .pele-edge-label) {
+    opacity: 0.22;
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .mpe-on-path {
+    opacity: 1;
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .pele-node.mpe-on-path :is(rect, polygon, circle, ellipse, path):not(.pele-icon *) {
+    stroke: var(--mpe-highlight);
+    stroke-width: 1.6px;
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .pele-edge.mpe-on-path > path:not(.pele-marker) {
+    stroke: var(--mpe-highlight);
+  }
+
+  /* Thick and dotted connectors keep their own weight. */
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .pele-edge.mpe-on-path > path:not(.pele-marker, [stroke-width]) {
+    stroke-width: 1.8px;
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .pele-edge.mpe-on-path > .pele-marker {
+    fill: var(--mpe-highlight);
+  }
+
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style).mpe-tracing .pele-edge.mpe-on-path > .pele-marker:not([stroke="none"]) {
+    stroke: var(--mpe-highlight);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) :is(.node, .flowchart-link, .edgePath, .edgeLabels > .edgeLabel),
-  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse) {
+  .mermaid svg.mfe-enhanced:not(#mfe-native-style#mfe-theme-style) .node :is(rect, polygon, circle, ellipse),
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) :is(.pele-node, .pele-edge, .pele-edge-label),
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-node :is(rect, polygon, circle, ellipse, path):not(.pele-icon *),
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-edge > path:not(.pele-marker),
+  .mermaid svg.mfe-pele:not(#mfe-native-style#mfe-theme-style) .pele-edge > .pele-marker {
     transition: none;
   }
 }

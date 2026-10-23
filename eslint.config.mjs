@@ -11,7 +11,7 @@ export default defineConfig(
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }] } },
   { files: ['tests/**/*.js'], languageOptions: { sourceType: 'commonjs', globals: {
     ...globals.node, ...globals.browser, mermaid: 'readonly', MPELayout: 'readonly',
-    MPEHighlight: 'readonly', mpeController: 'readonly',
+    MPEHighlight: 'readonly', mpeController: 'readonly', pele: 'readonly', MPEPele: 'readonly',
   } } },
   { files: ['**/*.ts', '**/*.mts'], extends: [tseslint.configs.recommended],
     languageOptions: { parserOptions: { projectService: true } },

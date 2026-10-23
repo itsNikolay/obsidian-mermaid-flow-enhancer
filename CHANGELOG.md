@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Restore path highlighting in Obsidian 1.15, which draws Mermaid diagrams with Pele instead of Mermaid.js. The plugin hooks Pele’s `mount` and marks nodes and connectors in every drawing, including redraws for a new width. LR/RL diagrams that Pele turns into TB for a narrow note keep correct return edges.
+- Lay out Pele flowcharts with the plugin’s compact spacing, label wrapping, and orthogonal rounded connectors by passing these settings to Pele; a diagram’s own configuration still wins. The Compact layout setting applies to both renderers.
+- Apply the plugin’s light and dark palettes, shadows, and highlight colors to Pele flowcharts from their first frame. Opted-out and non-flowchart diagrams keep Obsidian’s rendering.
+- Fix path highlighting in popout windows for both renderers: each window gets its own events and path controller.
+- Keep Obsidian 1.14’s Mermaid.js rendering and layout adjustments unchanged. `%% mfe:off` and every setting apply to both renderers.
+- Let Docker checks load an Obsidian update file (`OBSIDIAN_ASAR`), such as an early-access build, on the image’s installer. The checks detect the renderer and also cover connector hover, fading, clearing, the palette, popout windows, Pele’s orthogonal connectors, and the opt-out comment.
+- Add Pele 1.8.0, the version bundled with Obsidian 1.15.0, as a development dependency for browser tests.
+
 ## 1.0.1
 
 - Publish only the three Obsidian plugin assets; keep VirusTotal results in release notes, workflow artifacts, and public documentation.

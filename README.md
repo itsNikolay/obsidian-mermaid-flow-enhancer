@@ -25,9 +25,10 @@ Use Mermaid Flow Enhancer for **Obsidian flowchart styling**, **compact Mermaid 
 - Highlights ancestors of the hovered or focused node by traversing forward layout edges. Return/back edges are excluded from ancestor traversal, though a hovered edge itself can still highlight. Moving across an edge updates the highlighted path.
 - Works with light and dark Obsidian themes, with a uniform slate-blue palette in dark mode.
 - Leaves non-flowchart Mermaid diagrams to Mermaid's normal renderer.
+- Works with both of Obsidian's diagram renderers: Mermaid.js up to Obsidian 1.14, and Pele from Obsidian 1.15. With Pele, the compact spacing, label wrapping, and orthogonal rounded connectors come from Pele's own layout engine, so connector docking can differ slightly from Mermaid.js output.
 - Per-diagram opt-out with `%% mfe:off`.
 
-The plugin wraps Mermaid's render function and adjusts the generated SVG. It does not rewrite your notes.
+Up to Obsidian 1.14, the plugin wraps Mermaid's render function and adjusts the generated SVG. From Obsidian 1.15, it passes its layout settings to Pele and marks up each diagram Pele draws so its paths can be highlighted. It does not rewrite your notes.
 
 ## Release security checks
 
@@ -90,7 +91,7 @@ flowchart TD
 
 Hover a node or connector to trace its incoming ancestor path. Keyboard focus on a node also shows its path. The highlight clears after the pointer leaves the diagram.
 
-Add the opt-out comment inside a Mermaid diagram to retain Mermaid's rendering for that diagram:
+Add the opt-out comment inside a Mermaid diagram to retain Obsidian's rendering for that diagram, without path highlighting:
 
 ````markdown
 ```mermaid
@@ -102,7 +103,7 @@ flowchart LR
 
 ## Settings
 
-- **Compact layout**: enable or disable the plugin's flowchart layout adjustments.
+- **Compact layout**: enable or disable the plugin's flowchart layout adjustments. From Obsidian 1.15, Pele draws them: compact spacing, label wrapping, and orthogonal rounded connectors.
 - **Path highlight**: enable or disable ancestor-path highlighting.
 - **Animation duration**: transition time in milliseconds; default `450`.
 - **Hover delay**: delay before a highlight clears after leaving a target; default `180` ms.
@@ -115,7 +116,7 @@ Open the Markdown files under [`demo-vault/`](demo-vault/) in a disposable test 
 
 ## Compatibility and reporting issues
 
-The plugin uses Obsidian's Mermaid loader and Mermaid's generated SVG structure. Obsidian or Mermaid updates can change that structure, so compatibility beyond the manifest minimum has not yet been established. Please include your Obsidian version, platform, theme, and a minimal diagram when [opening an issue](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/issues/new/choose).
+The plugin uses Obsidian's Mermaid loader and the SVG structure its renderer generates. Obsidian 1.15 replaced Mermaid.js with Pele; the plugin detects which one is present. Both were checked in Linux Obsidian: 1.14.4 and the 1.15.0 early-access build. Obsidian or renderer updates can change that structure, so other versions may need a plugin update. Please include your Obsidian version, platform, theme, and a minimal diagram when [opening an issue](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/issues/new/choose).
 
 ## Development
 
