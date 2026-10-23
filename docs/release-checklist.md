@@ -71,3 +71,11 @@ Obsidian 1.14.4/Linux in Docker rendered both themes with 18 centered connector 
 Timers now use their SVG owner's window; source callbacks and DOM access have explicit types; event handlers retain their controller receiver; canvas creation uses Obsidian helpers; settings use the declarative API and no deprecated tooltip. Source safety rules prevent recurrence.
 
 The official directory review completed on 2026-10-09 and promoted 1.0.1 to the current public release. All listed source warnings and recommendations are resolved, including unsupported release files. The review shows only passes, verifies both attestations, and reproduces release JavaScript byte-for-byte.
+
+## 1.1.0 release verification
+
+[Release 1.1.0](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/releases/tag/1.1.0) supports Obsidian 1.15, which draws Mermaid diagrams with Pele instead of Mermaid.js, and fixes path highlighting in popout windows. Its [workflow](https://github.com/itsNikolay/obsidian-mermaid-flow-enhancer/actions/runs/39994685943) passed all linters, strict TypeScript checks, 46 unit tests, 19 browser tests, the build, VirusTotal, and artifact attestations. The release contains exactly `main.js`, `manifest.json`, and `styles.css`. All three downloaded files match the local build and scan hashes byte-for-byte, and independent attestation verification passed for all three.
+
+Docker checks ran plugin 1.1.0 in Linux Obsidian 1.14.4 (Mermaid.js) and in the Obsidian 1.15.0 early-access build loaded on the same installer (Pele). Both versions showed the plugin's palette and highlight colors in both themes. Hovered nodes and a connector traced their paths, including in a popout window, and an opted-out diagram stayed untouched. On 1.14.4 all 18 connector endpoints were centered; on 1.15.0 every connector was orthogonal. No application errors were reported, and no personal vault or host desktop app was used. [VirusTotal statistics](security/virustotal-1.1.0.json) record 0/61, 0/61, and 0/59 detections for JavaScript, manifest, and CSS respectively.
+
+The 1.15.0 checks used an early-access build; repeat them when Obsidian 1.15 has a public Linux installer. The directory review of 1.1.0 is pending. Mobile verification and external user feedback remain open.
